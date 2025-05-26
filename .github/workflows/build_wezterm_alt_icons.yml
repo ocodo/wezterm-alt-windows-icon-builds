@@ -17,10 +17,10 @@ jobs:
     strategy:
       matrix:
         icon:
-          - icons/wezterm-icon-Base.png
-          - icons/wezterm-icon-Shine.png
-          - icons/wezterm-icon-Flatter.png
-          - icons/wezterm-icon-Forest.png
+          - .alt-icons/wezterm-icon-Base.png
+          - .alt-icons/wezterm-icon-Shine.png
+          - .alt-icons/wezterm-icon-Flatter.png
+          - .alt-icons/wezterm-icon-Forest.png
 
     steps:
       - name: "checkout repo"
@@ -52,25 +52,23 @@ jobs:
           echo "wezterm_version=$wezterm_version" >> $GITHUB_OUTPUT
           curl -Lso wezterm_source.tar.gz "https://github.com/wezterm/wezterm/archive/refs/tags/${wezterm_version}.tar.gz"
           tar xf wezterm_source.tar.gz
-          mv "wezterm-${wezterm_version}" wezterm
+          mv "wezterm-${wezterm_version}"/* ~/
+          rm -rf "wezterm-${wezterm_version}"
 
       - name: "Vendor dependecies"
         if: steps.cache-cargo-vendor.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          cd wezterm
           cargo vendor --locked --versioned-dirs >> ~/.cargo/config
 
       - name: Replace terminal.ico
         run: |
-          magick -define icon:auto-resize=512,256,128,64,48 ${{ matrix.icon }} wezterm/assets/Windows/terminal.ico
+          magick -define icon:auto-resize=512,256,128,64,48 ${{ matrix.icon }} assets/Windows/terminal.ico
 
       - name: build wezterm
         shell: cmd
         run: |
-          cd wezterm
           SET PATH=C:\Strawberry\perl\bin;%PATH%
-          cargo vendor --locked --versioned-dirs >> .cargo/config
           cargo build -p wezterm --release
           cargo build -p wezterm-gui --release
           cargo build -p wezterm-mux-server --release
@@ -80,7 +78,6 @@ jobs:
       - name: ci deploy
         shell: bash
         run: |
-          cd wezterm
           ci/deploy.sh
 
       - name: review
@@ -89,3 +86,13 @@ jobs:
           ls -lahF
           echo "- - -"
           find . | grep -E "(zip|exe)"
+
+      - name: "Upload artifact"
+        uses: actions/upload-artifact@v3
+        with:
+          name: "windows"
+          path: |
+            WezTerm-*.zip
+            WezTerm-*.exe
+          retention-days: 5
+
