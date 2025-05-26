@@ -1,10 +1,10 @@
-name: Get WezTerm Source from nightly build
+name: WezTerm Windows alt icons builds
 
 on:
   workflow_dispatch:
 
 jobs:
-  fetch-wezterm-tar-gz:
+  Build-WezTerm-From-Source:
 
     env:
       BUILD_REASON: "Schedule"
@@ -43,13 +43,6 @@ jobs:
             .cargo/config
           key: "cargo-deps-${{ hashFiles('**/Cargo.lock') }}"
 
-      - name: "Vendor dependecies"
-        if: steps.cache-cargo-vendor.outputs.cache-hit != 'true'
-        shell: bash
-        run: |
-          cd wezterm
-          cargo vendor --locked --versioned-dirs >> ~/.cargo/config
-
       - name: fetch source
         shell: bash
         run: |
@@ -61,11 +54,18 @@ jobs:
           tar xf wezterm_source.tar.gz
           mv "wezterm-${wezterm_version}" wezterm
 
+      - name: "Vendor dependecies"
+        if: steps.cache-cargo-vendor.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          cd wezterm
+          cargo vendor --locked --versioned-dirs >> ~/.cargo/config
+
       - name: Replace terminal.ico
         run: |
           magick -define icon:auto-resize=512,256,128,64,48 ${{ matrix.icon }} wezterm/assets/Windows/terminal.ico
 
-      - name: build test
+      - name: build wezterm
         shell: cmd
         run: |
           cd wezterm
@@ -76,11 +76,13 @@ jobs:
           cargo build -p wezterm-mux-server --release
           cargo build -p strip-ansi-escapes --release
           cargo nextest run --all --no-fail-fast
+
       - name: ci deploy
         shell: bash
         run: |
           cd wezterm
           ci/deploy.sh
+
       - name: review
         shell: bash
         run: |
