@@ -87,12 +87,12 @@ jobs:
           echo "- - -"
           find . | grep -E "(zip|exe)"
 
-      - name: "Upload artifact"
-        uses: actions/upload-artifact@v3
-        with:
-          name: "windows"
-          path: |
-            WezTerm-*.zip
-            WezTerm-*.exe
-          retention-days: 5
+   #   - name: "Upload artifact"
+   #     uses: actions/upload-artifact@v3
+   #     with:
+   #       name: "windows"
+   #       path: |
+   #         WezTerm-*.zip
+   #         WezTerm-*.exe
+   #       retention-days: 5
 
