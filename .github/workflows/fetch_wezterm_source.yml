@@ -1,12 +1,34 @@
-name: Get WezTerm Source from nightly buils
+name: Get WezTerm Source from nightly build
 
 on:
   workflow_dispatch:
 
 jobs:
   fetch-wezterm-tar-gz:
+
+    env:
+      BUILD_REASON: "Schedule"
+      CARGO_INCREMENTAL: "0"
+      SCCACHE_GHA_ENABLED: "true"
+      RUSTC_WRAPPER: "sccache"
+      RUSTUP_WINDOWS_PATH_ADD_BIN: "1"
+  
     runs-on: windows-latest
+    strategy:
+      matrix:
+        icon:
+          - icons/wezterm-icon-Base.png
+          - icons/wezterm-icon-Shine.png
+          - icons/wezterm-icon-Flatter.png
+          - icons/wezterm-icon-Forest.png
+
     steps:
+      - name: "checkout repo"
+        uses: actions/checkout@v4
+
+      - name: "Install Icon Replacement Dependencies"
+        run: choco install imagemagick
+
       - name: fetch source
         shell: bash
         run: |
@@ -15,7 +37,26 @@ jobs:
             | sed -e "s|< Location: https://github.com/wezterm/wezterm/releases/tag/||")"
           echo "wezterm_version=$wezterm_version" >> $GITHUB_OUTPUT
           curl -Lso wezterm_source.tar.gz "https://github.com/wezterm/wezterm/archive/refs/tags/${wezterm_version}.tar.gz"
-          tar xvf wezterm_source.tar.gz
+          tar xf wezterm_source.tar.gz
           mv "wezterm-${wezterm_version}" wezterm
-          echo "--- WezTerm assets/Windows ($wezterm_version)"
-          ls -lahF wezterm/assets/Windows
+
+      - name: Replace terminal.ico
+        run: |
+          magick -define icon:auto-resize=512,256,128,64,48 ${{ matrix.icon }}.png wezterm/assets/Windows/terminal.ico
+
+      - name: build test
+        shell: cmd
+        run: |
+          cd wezterm
+          SET PATH=C:\Strawberry\perl\bin;%PATH%
+          cargo vendor --locked --versioned-dirs >> .cargo/config
+          cargo build -p wezterm --release
+          cargo build -p wezterm-gui --release
+          cargo build -p wezterm-mux-server --release
+          cargo build -p strip-ansi-escapes --release
+          cargo nextest run --all --no-fail-fast
+      - name: review ci deploy
+        shell: bash
+        run: |
+          cd wezterm
+          cat ci/deploy.sh
