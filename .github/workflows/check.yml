@@ -1,0 +1,15 @@
+name: Check
+
+on:
+  workflow_dispatch:
+
+joobs:
+  check:
+    runs-on: windows-latest
+    steps:
+      - name: check
+        shell: bash
+        run: |
+          IFS=: for dir in $PATH; do
+                  ls $dir
+                done
