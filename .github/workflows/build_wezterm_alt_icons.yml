@@ -54,6 +54,7 @@ jobs:
           tar xf wezterm_source.tar.gz
           mv "wezterm-${wezterm_version}"/* ~/
           rm -rf "wezterm-${wezterm_version}"
+          ls -lahF ~/
 
       - name: "Vendor dependecies"
         if: steps.cache-cargo-vendor.outputs.cache-hit != 'true'
