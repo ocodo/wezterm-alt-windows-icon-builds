@@ -12,7 +12,7 @@ jobs:
       SCCACHE_GHA_ENABLED: "true"
       RUSTC_WRAPPER: "sccache"
       RUSTUP_WINDOWS_PATH_ADD_BIN: "1"
-  
+
     runs-on: windows-latest
     strategy:
       matrix:
@@ -26,8 +26,27 @@ jobs:
       - name: "checkout repo"
         uses: actions/checkout@v4
 
-      - name: "Install Icon Replacement Dependencies"
-        run: choco install imagemagick
+      - name: "Install Rust"
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          target: "x86_64-pc-windows-msvc"
+
+      - name: "Compile with sccache"
+        uses: mozilla-actions/sccache-action@v0.0.9
+
+      - name: "Cache Rust Dependencies"
+        uses: actions/cache@v4
+        id: cache-cargo-vendor
+        with:
+          path: |
+            vendor
+            .cargo/config
+          key: "cargo-deps-${{ hashFiles('**/Cargo.lock') }}"
+
+      - name: "Vendor dependecies"
+        if: steps.cache-cargo-vendor.outputs.cache-hit != 'true'
+        shell: bash
+        run: "cargo vendor --locked --versioned-dirs >> .cargo/config"
 
       - name: fetch source
         shell: bash
@@ -55,8 +74,14 @@ jobs:
           cargo build -p wezterm-mux-server --release
           cargo build -p strip-ansi-escapes --release
           cargo nextest run --all --no-fail-fast
-      - name: review ci deploy
+      - name: ci deploy
         shell: bash
         run: |
           cd wezterm
-          cat ci/deploy.sh
+          ci/deploy.sh
+      - name: review
+        shell: bash
+        run: |
+          ls -lahF
+          echo "- - -"
+          find . | grep -E "(zip|exe)"
