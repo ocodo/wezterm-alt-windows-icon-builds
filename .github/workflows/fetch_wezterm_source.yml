@@ -46,7 +46,7 @@ jobs:
       - name: "Vendor dependecies"
         if: steps.cache-cargo-vendor.outputs.cache-hit != 'true'
         shell: bash
-        run: "cargo vendor --locked --versioned-dirs >> .cargo/config"
+        run: "cargo vendor --locked --versioned-dirs >> ~/.cargo/config"
 
       - name: fetch source
         shell: bash
