@@ -1,6 +1,8 @@
 # WezTerm - Windows builds using alternative icons
 
-**This repo** will sync with wezterm/weztern and compiles a windows zip distro for each of a set of custom icons. If you want to add an icon open a pull request. 
+**This repo** will sync with wezterm/weztern and compile a windows zip distro for each of a set of custom icons. 
+
+If you want to add an icon open a pull request, and get some 👍 for it!
 
 If there are no releases, this is still _**work in progress**_
 
@@ -9,6 +11,8 @@ Notes/Motivation:
 `rcedit.exe` doesn't seem to patch the `wezterm-gui.exe` icon correctly, I'm making this experimental repo to run builds with `assets/Windows/terminal.ico` replaced with each `png` in `/icons`.
 
 NO OTHER CHANGE WILL BE MADE - code will be in `./.github/workflows/*` and `./src/*`
+
+The build process will be an extract of wez's `...workflows/gen_windows_continuous.yml`
 
 # Alternate Icons
 
