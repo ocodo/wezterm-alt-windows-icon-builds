@@ -4,20 +4,17 @@ on:
   workflow_dispatch:
 
 jobs:
-  check:
+  fetch-wezterm-tar-gz:
     runs-on: windows-latest
     steps:
       - name: fetch source
         shell: bash
         run: |
           curl -sv https://github.com/wezterm/wezterm/releases/latest
-
           echo "Extracting Version"
-          
           export wezterm_version="$(curl -sv "https://github.com/wezterm/wezterm/releases/latest" 2>&1 \
             | grep -Ei "< Location: https://github.com/wezterm/wezterm/releases/tag/.*$" \
             | sed -e "s|< Location: https://github.com/wezterm/wezterm/releases/tag/||")"
-
           echo "wezterm_version=$wezterm_version" >> $GITHUB_OUTPUT
           echo "Get source"
           echo "https://github.com/wezterm/wezterm/archive/refs/tags/${wezterm_version}.tar.gz"
@@ -25,5 +22,6 @@ jobs:
           ls -lah .
           
           tar xvf wezterm_source.tar.gz
+          mv "wezterm-${wezterm_version}" wezterm
           echo "--- WezTerm ls recursive ($wezterm_version)"
           ls -lahR .
