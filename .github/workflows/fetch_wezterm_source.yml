@@ -10,18 +10,12 @@ jobs:
       - name: fetch source
         shell: bash
         run: |
-          curl -sv https://github.com/wezterm/wezterm/releases/latest
-          echo "Extracting Version"
           export wezterm_version="$(curl -sv "https://github.com/wezterm/wezterm/releases/latest" 2>&1 \
             | grep -Ei "< Location: https://github.com/wezterm/wezterm/releases/tag/.*$" \
             | sed -e "s|< Location: https://github.com/wezterm/wezterm/releases/tag/||")"
           echo "wezterm_version=$wezterm_version" >> $GITHUB_OUTPUT
-          echo "Get source"
-          echo "https://github.com/wezterm/wezterm/archive/refs/tags/${wezterm_version}.tar.gz"
-          curl -Lsvo wezterm_source.tar.gz "https://github.com/wezterm/wezterm/archive/refs/tags/${wezterm_version}.tar.gz"
-          ls -lah .
-          
+          curl -Lso wezterm_source.tar.gz "https://github.com/wezterm/wezterm/archive/refs/tags/${wezterm_version}.tar.gz"
           tar xvf wezterm_source.tar.gz
           mv "wezterm-${wezterm_version}" wezterm
-          echo "--- WezTerm ls recursive ($wezterm_version)"
-          ls -lahR .
+          echo "--- WezTerm assets/Windows ($wezterm_version)"
+          ls -lahF wezterm/assets/Windows
