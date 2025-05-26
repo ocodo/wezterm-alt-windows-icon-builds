@@ -2,7 +2,7 @@
 
 **This repo** will sync with wezterm/weztern and compile a windows zip distro for each of a set of custom icons. 
 
-If you want to add an icon png (`<= 1024x1024 && >= 512x512`) open a pull request, and get some 👍 for it!
+If you want to add an icon png (`size <= 1024x1024 && size >= 512x512`) open a pull request, and get some 👍 for it!
 
 #### Notes/Motivation:
 
