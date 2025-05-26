@@ -42,7 +42,7 @@ jobs:
 
       - name: Replace terminal.ico
         run: |
-          magick -define icon:auto-resize=512,256,128,64,48 ${{ matrix.icon }}.png wezterm/assets/Windows/terminal.ico
+          magick -define icon:auto-resize=512,256,128,64,48 ${{ matrix.icon }} wezterm/assets/Windows/terminal.ico
 
       - name: build test
         shell: cmd
