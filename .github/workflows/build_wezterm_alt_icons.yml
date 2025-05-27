@@ -57,7 +57,8 @@ jobs:
           echo "wezterm_version=$wezterm_version" >> $GITHUB_OUTPUT
           curl -Lso wezterm_source.tar.gz "https://github.com/wezterm/wezterm/archive/refs/tags/${wezterm_version}.tar.gz"
           tar xf wezterm_source.tar.gz
-          mv -v "wezterm-${wezterm_version}"/* .
+          mv -v "wezterm-${wezterm_version}"/* . # Move files to pwd
+          mv -v "wezterm-${wezterm_version}"/.* . # Move dotfiles to pwd
           rm -rf "wezterm-${wezterm_version}"
           ls -lahF
 
