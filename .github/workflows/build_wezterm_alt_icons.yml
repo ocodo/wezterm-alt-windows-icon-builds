@@ -124,7 +124,7 @@ jobs:
           Write-Host "All icons processed and cleanup complete."
 
       - name: "Upload artifact"
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: "windows"
           if-no-files-found: ignore
