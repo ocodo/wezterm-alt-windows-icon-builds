@@ -69,7 +69,7 @@ jobs:
         if: steps.cache-cargo-vendor.outputs.cache-hit != 'true'
         shell: cmd
         run: |
-          cargo vendor --locked --versioned-dirs >> .cargo/config
+          cargo vendor --locked --versioned-dirs >> C:\Users\runneradmin\.cargo\config
 
       - name: "Replace terminal.ico"
         run: |
