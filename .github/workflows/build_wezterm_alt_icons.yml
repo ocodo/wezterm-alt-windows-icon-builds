@@ -80,10 +80,8 @@ jobs:
 
       - name: "Vendor dependecies"
         if: steps.cache-cargo-vendor.outputs.cache-hit != 'true'
+        shell: bash
         run: |
-          echo %cd%
-          echo %HOMEPATH%
-          dir
           cargo vendor --locked --versioned-dirs >> .cargo\config
 
       - name: "Replace terminal.ico"
