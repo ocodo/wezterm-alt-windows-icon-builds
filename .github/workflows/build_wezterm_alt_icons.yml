@@ -37,98 +37,28 @@ jobs:
         with:
           detached: true
 
-      - name: "Install Rust"
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          target: "x86_64-pc-windows-msvc"
+      - name: "Install Dependencies"
+        run: |
+          choco install imagemagick
+          choco install rcedit
+          choco install resource-hacker
 
-      - name: "Compile with sccache"
-        uses: mozilla-actions/sccache-action@v0.0.9
-        
-      - name: "Cache Rust Dependencies"
-        uses: actions/cache@v4
-        id: cache-cargo-vendor
-        with:
-          path: |
-            vendor
-            .cargo/config
-          key: "cargo-deps-${{ hashFiles('**/Cargo.lock') }}"
-
-      - name: "Fetch WezTerm Source"
+      - name: "Fetch WezTerm Windows Zip"
         shell: bash
         run: |
           export wezterm_version="$(curl -sv "https://github.com/wezterm/wezterm/releases/latest" 2>&1 \
             | grep -Ei "< Location: https://github.com/wezterm/wezterm/releases/tag/.*$" \
             | sed -e "s|< Location: https://github.com/wezterm/wezterm/releases/tag/||")"
           echo "wezterm_version=$wezterm_version" | tee -a $GITHUB_OUTPUT
-          export wezterm_src_tar_url="https://github.com/wezterm/wezterm/releases/download/${wezterm_version}/wezterm-${wezterm_version}-src.tar.gz"
-          echo "$wezterm_src_tar_url"
-          curl -Lso wezterm_source.tar.gz "$wezterm_src_tar_url"
+          export wezterm_windows_zip_url="https://github.com/wezterm/wezterm/releases/download/${wezterm_version}/WezTerm-windows-${wezterm_version}.zip"
 
-          export MSYS=winsymlinks:lnk
-          tar xzf wezterm_source.tar.gz
-          mv -v "wezterm-${wezterm_version}"/* . # Move files to pwd
+          curl -Lso wezterm_windows.zip "$wezterm_windows_zip_url"
 
-          # inspect and salvage wezterm/wezterm .github path
-          if [[ -d "wezterm-${wezterm_version}"/.github ]]; then
-            ls -lahFr "wezterm-${wezterm_version}"/.github
-          else
-            cat "wezterm-${wezterm_version}"/.github
-          fi
-          # save as .github-wezterm-source
-          mv "wezterm-${wezterm_version}"/.github ./.github-wezterm-source
-
-
-          mv -v "wezterm-${wezterm_version}"/.* . # Move dotfiles to pwd
-          rm -rf "wezterm-${wezterm_version}"
-          ls -lahF
-
-      - name: "Vendor dependecies"
-        if: steps.cache-cargo-vendor.outputs.cache-hit != 'true'
-        shell: bash
-        run: |
-          cargo vendor --locked --versioned-dirs >> .cargo\config
+          unzip wezterm_windows.zip
 
       - name: "Replace terminal.ico"
         run: |
-          magick -define icon:auto-resize=512,256,128,64,48 ${{ matrix.icon }} assets/Windows/terminal.ico
-
-      - name: "Build WezTerm"
-        shell: cmd
-        run: |
-          SET PATH=C:\Strawberry\perl\bin;%PATH%
-          cargo build -p wezterm --release
-          
-      - name: "Build WezTerm-Gui"
-        shell: cmd
-        run: |
-          SET PATH=C:\Strawberry\perl\bin;%PATH%
-          cargo build -p wezterm-gui --release
-          
-      - name: "Build WezTerm-Mux-Server"
-        shell: cmd
-        run: |
-          SET PATH=C:\Strawberry\perl\bin;%PATH%
-          cargo build -p wezterm-mux-server --release
-          
-      - name: "Build Strip-Ansi-Escapes"
-        shell: cmd
-        run: |
-          SET PATH=C:\Strawberry\perl\bin;%PATH%
-          cargo build -p strip-ansi-escapes --release
-
-      - name: "Review Build"
-        shell: bash
-        run: |
-          echo "- - -"
-          find target/release
-          echo "- - -"
-
-      - name: "Run ci/deploy.sh"
-        shell: bash
-        run: |
-          ci/deploy.sh
-
+          magick -define icon:auto-resize=512,256,128,64,48 ${{ matrix.icon }} terminal.ico
 
    #   - name: "Upload artifact"
    #     uses: actions/upload-artifact@v3
