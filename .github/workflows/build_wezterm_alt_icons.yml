@@ -30,17 +30,17 @@ jobs:
 
           scoop install imagemagick rcedit resource-hacker
 
-      - name: "GetWezTermWindowsZip"
+      - name: "get_wezterm_zip"
         shell: bash
         run: |
           export wezterm_version="$(curl -sv "https://github.com/wezterm/wezterm/releases/latest" 2>&1 \
             | grep -Ei "< Location: https://github.com/wezterm/wezterm/releases/tag/.*$" \
             | sed -e "s|< Location: https://github.com/wezterm/wezterm/releases/tag/||")"
+
           echo "wezterm_version=$wezterm_version" | tee -a $GITHUB_OUTPUT
+
           export wezterm_windows_zip_url="https://github.com/wezterm/wezterm/releases/download/${wezterm_version}/WezTerm-windows-${wezterm_version}.zip"
-
           curl -Lso wezterm_windows.zip "$wezterm_windows_zip_url"
-
           unzip wezterm_windows.zip
 
       - name: "Create .ico files"
@@ -52,12 +52,11 @@ jobs:
           done
 
       - name: "Create Zip Packages of WezTerm with each Icon"
-        env:
-          wezterm_version: ${{ steps.GetWezTermWindowsZip.outputs.wezterm_version }}
         shell: pwsh
         run: |
           # Import the wezterm_version from the previous step's output
-          $wezterm_version = "$env:wezterm_version"
+          $wezterm_version = "${{ steps.get_wezterm_zip.outputs.wezterm_version }}"
+          Write-Host "wezterm_version = $wezterm_version"
 
           # Set zip file name and folder name based on version
           $zipFile = "WezTerm-windows-$wezterm_version.zip"
