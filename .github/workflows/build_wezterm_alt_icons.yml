@@ -55,8 +55,10 @@ jobs:
       - name: "Fetch WezTerm Source"
         shell: bash
         run: |
-          export wezterm_version="$(curl -sv "https://github.com/wezterm/wezterm/releases/latest" 2>&1 \
-            | rg "< Location: .*/tag/(.*)$" --replace '$1'
+          export wezterm_version="$( \
+            curl -sv "https://github.com/wezterm/wezterm/releases/latest" 2>&1 \
+              | rg "< Location: .*/tag/(.*)$" --replace '$1' \
+          )"
           echo "wezterm_version=$wezterm_version" >> $GITHUB_OUTPUT
           curl -Lso wezterm_source.tar.gz "https://github.com/wezterm/wezterm/releases/download/${wezterm_version}/wezterm-${wezterm_version}-src.tar.gz"
           tar xf wezterm_source.tar.gz
