@@ -58,7 +58,8 @@ jobs:
 
       - name: "Replace terminal.ico"
         run: |
-          magick -define icon:auto-resize=512,256,128,64,48 ${{ matrix.icon }} terminal.ico
+          magick -background transparent -define icon:auto-resize="16,24,32,48,64,128,256" ${{ matrix.icon }} ${{ matrix.icon }}.ico
+
 
    #   - name: "Upload artifact"
    #     uses: actions/upload-artifact@v3
