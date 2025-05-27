@@ -29,14 +29,16 @@ jobs:
 
           scoop install imagemagick rcedit resource-hacker
 
-      - name: "get_wezterm_zip"
+      - name: "Get WezTerm Windows Distro zip"
+        id: "get_wezterm_zip"
         shell: bash
         run: |
           export wezterm_version="$(curl -sv "https://github.com/wezterm/wezterm/releases/latest" 2>&1 \
             | grep -Ei "< Location: https://github.com/wezterm/wezterm/releases/tag/.*$" \
             | sed -e "s|< Location: https://github.com/wezterm/wezterm/releases/tag/||")"
 
-          echo "wezterm_version=$wezterm_version" | tee -a $GITHUB_OUTPUT
+          echo "wezterm_version=$wezterm_version" >> $GITHUB_OUTPUT
+          echo "wezterm_version=$wezterm_version"
 
           export wezterm_windows_zip_url="https://github.com/wezterm/wezterm/releases/download/${wezterm_version}/WezTerm-windows-${wezterm_version}.zip"
           curl -Lso wezterm_windows.zip "$wezterm_windows_zip_url"
