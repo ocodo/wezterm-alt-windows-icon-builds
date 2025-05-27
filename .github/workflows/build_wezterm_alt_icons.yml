@@ -36,6 +36,10 @@ jobs:
         with:
           target: "x86_64-pc-windows-msvc"
 
+      - name: "Install ripgrep"
+        run: |
+          scoop install ripgrep
+
       - name: "Compile with sccache"
         uses: mozilla-actions/sccache-action@v0.0.9
 
@@ -52,10 +56,9 @@ jobs:
         shell: bash
         run: |
           export wezterm_version="$(curl -sv "https://github.com/wezterm/wezterm/releases/latest" 2>&1 \
-            | grep -Ei "< Location: https://github.com/wezterm/wezterm/releases/tag/.*$" \
-            | sed -e "s|< Location: https://github.com/wezterm/wezterm/releases/tag/||")"
+            | rg "< Location: .*/tag/(.*)$" --replace '$1'
           echo "wezterm_version=$wezterm_version" >> $GITHUB_OUTPUT
-          curl -Lso wezterm_source.tar.gz "https://github.com/wezterm/wezterm/archive/refs/tags/${wezterm_version}-src.tar.gz"
+          curl -Lso wezterm_source.tar.gz "https://github.com/wezterm/wezterm/releases/download/${wezterm_version}/wezterm-${wezterm_version}-src.tar.gz"
           tar xf wezterm_source.tar.gz
           mv -v "wezterm-${wezterm_version}"/* . # Move files to pwd
 
