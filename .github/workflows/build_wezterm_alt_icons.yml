@@ -10,7 +10,6 @@ on:
 
 jobs:
   Build-WezTerm-From-Source:
-
     runs-on: windows-latest
     steps:
       - name: "Checkout Local Repo"
