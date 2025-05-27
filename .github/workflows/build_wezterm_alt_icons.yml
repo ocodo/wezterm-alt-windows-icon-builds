@@ -2,6 +2,11 @@ name: WezTerm Windows Alt Icon Builds
 
 on:
   workflow_dispatch:
+    inputs:
+      debugging:
+        type: boolean
+        required: false
+        default: false
 
 jobs:
   Build-WezTerm-From-Source:
@@ -58,12 +63,14 @@ jobs:
 
       - name: "Remote Debugging"
         uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debugging }}
 
       - name: "Vendor dependecies"
         if: steps.cache-cargo-vendor.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          cargo vendor --locked --versioned-dirs >> ~/.cargo/config
+          echo "$PWD"
+          cargo vendor --locked --versioned-dirs >> .cargo/config
 
       - name: "Replace terminal.ico"
         run: |
@@ -87,7 +94,6 @@ jobs:
       - name: "Review Deploy"
         shell: bash
         run: |
-          ls -lahF
           echo "- - -"
           find . | grep -E "(zip|exe)"
 
