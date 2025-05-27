@@ -36,13 +36,9 @@ jobs:
         with:
           target: "x86_64-pc-windows-msvc"
 
-      - name: "Install ripgrep"
-        run: |
-          cargo install ripgrep
-
       - name: "Compile with sccache"
         uses: mozilla-actions/sccache-action@v0.0.9
-
+        
       - name: "Cache Rust Dependencies"
         uses: actions/cache@v4
         id: cache-cargo-vendor
@@ -51,6 +47,10 @@ jobs:
             vendor
             .cargo/config
           key: "cargo-deps-${{ hashFiles('**/Cargo.lock') }}"
+
+      - name: "Install ripgrep"
+        run: |
+          cargo install ripgrep
 
       - name: "Fetch WezTerm Source"
         shell: bash
