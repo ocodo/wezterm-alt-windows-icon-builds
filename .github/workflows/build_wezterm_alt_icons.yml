@@ -67,9 +67,11 @@ jobs:
 
       - name: "Vendor dependecies"
         if: steps.cache-cargo-vendor.outputs.cache-hit != 'true'
-        shell: cmd
         run: |
-          cargo vendor --locked --versioned-dirs >> C:\Users\runneradmin\.cargo\config
+          echo $env:cd
+          echo $env:HOMEPATH
+          dir
+          cargo vendor --locked --versioned-dirs >> .cargo\config
 
       - name: "Replace terminal.ico"
         run: |
