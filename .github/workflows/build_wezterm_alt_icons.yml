@@ -11,22 +11,7 @@ on:
 jobs:
   Build-WezTerm-From-Source:
 
-    env:
-      BUILD_REASON: "Schedule"
-      CARGO_INCREMENTAL: "0"
-      SCCACHE_GHA_ENABLED: "true"
-      RUSTC_WRAPPER: "sccache"
-      RUSTUP_WINDOWS_PATH_ADD_BIN: "1"
-
     runs-on: windows-latest
-    strategy:
-      matrix:
-        icon:
-          - .alt-icons/wezterm-icon-Base.png
-          - .alt-icons/wezterm-icon-Shine.png
-          - .alt-icons/wezterm-icon-Flatter.png
-          - .alt-icons/wezterm-icon-Forest.png
-
     steps:
       - name: "Checkout Local Repo"
         uses: actions/checkout@v4
@@ -56,10 +41,16 @@ jobs:
 
           unzip wezterm_windows.zip
 
-      - name: "Replace terminal.ico"
+      - name: "Create .ico files"
         run: |
-          magick -background transparent -define icon:auto-resize="16,24,32,48,64,128,256" ${{ matrix.icon }} ${{ matrix.icon }}.ico
+          for image in .alt-icons/*png
+          do
+            magick -background transparent -define icon:auto-resize="16,24,32,48,64,128,256" "$image" "${image/png/ico}"
+          done
 
+      - name: "Copy wezterm_windows.zip for each ico and patch"
+        run: |
+          echo "TODO"
 
    #   - name: "Upload artifact"
    #     uses: actions/upload-artifact@v3
@@ -67,6 +58,5 @@ jobs:
    #       name: "windows"
    #       path: |
    #         WezTerm-*.zip
-   #         WezTerm-*.exe
    #       retention-days: 5
 
