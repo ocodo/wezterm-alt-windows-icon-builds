@@ -94,6 +94,7 @@ jobs:
         shell: cmd
         run: |
           SET PATH=C:\Strawberry\perl\bin;%PATH%
+          cargo update
           cargo build -p wezterm --release
           cargo build -p wezterm-gui --release
           cargo build -p wezterm-mux-server --release
