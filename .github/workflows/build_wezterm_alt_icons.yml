@@ -123,11 +123,11 @@ jobs:
 
           Write-Host "All icons processed and cleanup complete."
 
-
       - name: "Upload artifact"
         uses: actions/upload-artifact@v3
         with:
           name: "windows"
+          if-no-files-found: ignore
           path: |
             WezTerm-*.zip
           retention-days: 5
