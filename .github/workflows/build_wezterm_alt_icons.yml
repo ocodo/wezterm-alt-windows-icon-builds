@@ -98,16 +98,17 @@ jobs:
           cargo build -p wezterm-mux-server --release
           cargo build -p strip-ansi-escapes --release
 
+      - name: "Review Build"
+        shell: bash
+        run: |
+          echo "- - -"
+          find . | grep -E "(zip|exe)"
+
       - name: "Run ci/deploy.sh"
         shell: bash
         run: |
           ci/deploy.sh
 
-      - name: "Review Deploy"
-        shell: bash
-        run: |
-          echo "- - -"
-          find . | grep -E "(zip|exe)"
 
    #   - name: "Upload artifact"
    #     uses: actions/upload-artifact@v3
