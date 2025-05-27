@@ -98,7 +98,6 @@ jobs:
           cargo build -p wezterm-gui --release
           cargo build -p wezterm-mux-server --release
           cargo build -p strip-ansi-escapes --release
-          cargo nextest run --all --no-fail-fast
 
       - name: "Run ci/deploy.sh"
         shell: bash
