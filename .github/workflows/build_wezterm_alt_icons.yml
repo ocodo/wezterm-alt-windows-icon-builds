@@ -1,4 +1,4 @@
-name: WezTerm Windows alt icons builds
+name: WezTerm Windows Alt Icon Builds
 
 on:
   workflow_dispatch:
@@ -23,7 +23,7 @@ jobs:
           - .alt-icons/wezterm-icon-Forest.png
 
     steps:
-      - name: "checkout repo"
+      - name: "Checkout Local Repo"
         uses: actions/checkout@v4
 
       - name: "Install Rust"
@@ -43,7 +43,7 @@ jobs:
             .cargo/config
           key: "cargo-deps-${{ hashFiles('**/Cargo.lock') }}"
 
-      - name: fetch source
+      - name: "Fetch WezTerm Source"
         shell: bash
         run: |
           export wezterm_version="$(curl -sv "https://github.com/wezterm/wezterm/releases/latest" 2>&1 \
@@ -56,17 +56,20 @@ jobs:
           rm -rf "wezterm-${wezterm_version}"
           ls -lahF ~/
 
+      - name: "Remote Debugging"
+        uses: mxschmitt/action-tmate@v3
+
       - name: "Vendor dependecies"
         if: steps.cache-cargo-vendor.outputs.cache-hit != 'true'
         shell: bash
         run: |
           cargo vendor --locked --versioned-dirs >> ~/.cargo/config
 
-      - name: Replace terminal.ico
+      - name: "Replace terminal.ico"
         run: |
           magick -define icon:auto-resize=512,256,128,64,48 ${{ matrix.icon }} assets/Windows/terminal.ico
 
-      - name: build wezterm
+      - name: "Build WezTerm"
         shell: cmd
         run: |
           SET PATH=C:\Strawberry\perl\bin;%PATH%
@@ -76,12 +79,12 @@ jobs:
           cargo build -p strip-ansi-escapes --release
           cargo nextest run --all --no-fail-fast
 
-      - name: ci deploy
+      - name: "Run ci/deploy.sh"
         shell: bash
         run: |
           ci/deploy.sh
 
-      - name: review
+      - name: "Review Deploy"
         shell: bash
         run: |
           ls -lahF
