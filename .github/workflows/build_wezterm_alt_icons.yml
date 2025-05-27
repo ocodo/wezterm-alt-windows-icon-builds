@@ -57,7 +57,9 @@ jobs:
         run: |
           export wezterm_version="$(curl -sv "https://github.com/wezterm/wezterm/releases/latest" 2>&1 | rg "< location:.*/tag/(.*)$" --replace '$1')"
           echo "wezterm_version=$wezterm_version" >> $GITHUB_OUTPUT
-          curl -Lso wezterm_source.tar.gz "https://github.com/wezterm/wezterm/releases/download/${wezterm_version}/wezterm-${wezterm_version}-src.tar.gz"
+          export wezterm_src_tar_url="https://github.com/wezterm/wezterm/releases/download/${wezterm_version}/wezterm-${wezterm_version}-src.tar.gz"
+          echo "$wezterm_src_tar_url"
+          curl -Lso wezterm_source.tar.gz "$wezterm_src_tar_url"
           tar xf wezterm_source.tar.gz
           mv -v "wezterm-${wezterm_version}"/* . # Move files to pwd
 
