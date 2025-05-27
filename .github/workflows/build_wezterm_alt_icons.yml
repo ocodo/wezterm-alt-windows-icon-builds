@@ -77,6 +77,7 @@ jobs:
           dir
 
       - name: "PWD Path check bash"
+        shell: bash
         run: |
           pwd
           echo $HOME
