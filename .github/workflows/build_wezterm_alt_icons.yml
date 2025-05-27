@@ -23,10 +23,12 @@ jobs:
           detached: true
 
       - name: "Install Dependencies"
+        shell: pwsh
         run: |
-          choco install imagemagick
-          choco install rcedit
-          choco install resource-hacker
+          Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
+          scoop bucket add extras
+
+          scoop install imagemagick rcedit resource-hacker
 
       - name: "Fetch WezTerm Windows Zip"
         shell: bash
@@ -42,6 +44,7 @@ jobs:
           unzip wezterm_windows.zip
 
       - name: "Create .ico files"
+        shell: bash
         run: |
           for image in .alt-icons/*png
           do
