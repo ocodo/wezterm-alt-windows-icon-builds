@@ -27,7 +27,7 @@ jobs:
           Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
           scoop bucket add extras
 
-          scoop install imagemagick rcedit resource-hacker
+          scoop install imagemagick rcedit
 
       - name: "Get WezTerm Windows Distro zip"
         id: "get_wezterm_zip"
@@ -97,7 +97,7 @@ jobs:
 
               # Use rcedit to patch the executable with the new icon
               Write-Host "Patching executable icon using rcedit: $exePath with icon $iconPath"
-              rcedit.exe $exePath --set-icon $iconPath
+              ~\scoop\shims\rcedit.exe $exePath --set-icon $iconPath
 
               # Create a zip file from the new folder
               $zipOut = "$newFolderName.zip"
