@@ -4,8 +4,6 @@
 
 If you want to add an icon png (`size <= 1024x1024 && size >= 512x512`) open a pull request, and get some 👍 for it!
 
-### Releases will start tomorrow... hopefully
-
 # Alternate Icons
 
 see also wezterm/wezterm#2396
