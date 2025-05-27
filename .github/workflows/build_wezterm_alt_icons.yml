@@ -9,11 +9,84 @@ on:
         default: false
 
 jobs:
-  Build-WezTerm-From-Source:
-    runs-on: windows-latest
+  get-wezterm:
+    runs-on: ubuntu-latest
+    outputs:
+      wezterm_version: ${{ steps.get_wezterm_zip.wezterm_version }}
+      wezterm_folder: ${{ steps.get_wezterm_zip.wezterm_folder }}
+    steps:
+      - name: Get Dependencies
+        run: |
+          sudo apt update
+          sudo apt install ripgrep
+      - name: Get WezTerm Windows Zip
+        id: get_wezterm_zip
+        run: |
+          export wezterm_version="$(
+            curl -sv "https://github.com/wezterm/wezterm/releases/latest" 2>&1 \
+            | rg "^< location:.*?/tag/([\w-]*)" --replace '$1' \
+            | tr -d '\n' \
+            | tr -d '\r'
+          )"
+
+          echo "wezterm_version=$wezterm_version"
+          echo "wezterm_version=$wezterm_version" >> $GITHUB_OUTPUT
+
+          export wezterm_folder="WezTerm-windows-${wezterm_version}"
+          echo "wezterm_folder=$wezterm_folder"
+
+          export url="https://github.com/wezterm/wezterm/releases/download/${wezterm_version}/${wezterm_folder}.zip"
+          echo "url=$url"
+
+          curl -Lso temp.zip "$url"
+
+          unzip temp.zip
+          mv $wezterm_folder wezterm
+          rm temp.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wezterm.zip
+          path: wezterm
+          retention-days: 2
+
+  icon-matrix:
+    needs: get-wezterm
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - name: "Checkout Local Repo"
         uses: actions/checkout@v4
+
+      - id: set-matrix
+        run: |
+          echo "matrix=$(echo "[$(
+            for a in .alt-icons/*
+            do
+                    echo "\"$a\","
+            done
+          )]" | sed -e "s|,\]|\]|" | jq)" >> $GITHUB_OUTPUT
+      - uses: actions/upload-artifact@v4
+        with:
+          name: alt-icons.zip
+          path: .alt-icons
+          retention-days: 2
+
+  Patch_WezTerm_Icon:
+    needs: icon-matrix
+    strategy:
+      matrix:
+        icon: ${{ fromJson(needs.icon-matrix.outputs.matrix) }}
+    runs-on: windows-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: wezterm.zip
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: alt-icons.zip
 
       - name: "Remote Debugging"
         uses: mxschmitt/action-tmate@v3
@@ -29,31 +102,14 @@ jobs:
 
           scoop install imagemagick rcedit
 
-      - name: "Get WezTerm Windows Distro zip"
-        id: "get_wezterm_zip"
+      - name: "Create .ico file"
         shell: bash
         run: |
-          export wezterm_version="$(curl -sv "https://github.com/wezterm/wezterm/releases/latest" 2>&1 \
-            | grep -Ei "< Location: https://github.com/wezterm/wezterm/releases/tag/.*$" \
-            | sed -e "s|< Location: https://github.com/wezterm/wezterm/releases/tag/||")"
-
-          echo "wezterm_version=$wezterm_version" >> $GITHUB_OUTPUT
-          echo "wezterm_version=$wezterm_version"
-
-          export wezterm_windows_zip_url="https://github.com/wezterm/wezterm/releases/download/${wezterm_version}/WezTerm-windows-${wezterm_version}.zip"
-          curl -Lso wezterm_windows.zip "$wezterm_windows_zip_url"
-          unzip wezterm_windows.zip
-          rm wezterm_windows.zip
-
-      - name: "Create .ico files"
-        shell: bash
-        run: |
-          for image in .alt-icons/*png
-          do
-            magick -background transparent -define icon:auto-resize="16,32,48,64,96,128,256" "$image" "${image/png/ico}"
-          done
+          export image="${{ matrix.icon }}"
+          magick -background transparent -define icon:auto-resize="16,32,48,64,96,128,256" "$image" "${image/png/ico}"
 
       - name: "Create Zip Packages of WezTerm with each Icon"
+        id: zip-windows-package
         shell: pwsh
         run: |
           # Import the wezterm_version from the previous step's output
@@ -62,68 +118,45 @@ jobs:
 
           # Set extracted folder name based on version
           $extractedFolder = "WezTerm-windows-$wezterm_version"
-          $altIconsDir = ".alt-icons"
 
-          # Process each .ico file in the .alt-icons directory
-          Get-ChildItem -Path $altIconsDir -Filter "wezterm-icon-*.ico" | ForEach-Object {
-
-              # Extract the unique part of the icon file name (e.g., 'Shine' from 'wezterm-icon-Shine.ico')
-              $iconFileName = $_.Name
-              if ($iconFileName -match '^wezterm-icon-(.+)\.ico$') {
-                  $icoPart = $matches[1]
-              }
-              else {
-                  Write-Warning "Skipping unexpected icon file name format: $iconFileName"
-                  return
-              }
-
-              # New folder name combining version and icon part
-              $newFolderName = "$extractedFolder-$icoPart"
-
-              Write-Host "Processing icon '$icoPart'..."
-
-              # Remove the existing folder if it exists
-              if (Test-Path $newFolderName) {
-                  Write-Host "Removing existing folder $newFolderName"
-                  Remove-Item -Recurse -Force -Path $newFolderName
-              }
-
-              # Copy the extracted folder to the new folder
-              Copy-Item -Path $extractedFolder -Destination $newFolderName -Recurse
-
-              # Define the path to the executable and icon file
-              $exePath = Join-Path -Path $newFolderName -ChildPath "wezterm-gui.exe"
-              $iconPath = Join-Path -Path $altIconsDir -ChildPath $iconFileName
-
-              # Use rcedit to patch the executable with the new icon
-              Write-Host "Patching executable icon using rcedit: $exePath with icon $iconPath"
-              ~\scoop\shims\rcedit.exe $exePath --set-icon $iconPath
-
-              # Create a zip file from the new folder
-              $zipOut = "$newFolderName.zip"
-              if (Test-Path $zipOut) {
-                  Write-Host "Removing existing zip $zipOut"
-                  Remove-Item -Force $zipOut
-              }
-
-              Write-Host "Creating zip archive $zipOut ..."
-              Compress-Archive -Path $newFolderName -DestinationPath $zipOut -Force
-
-              Write-Host "Done processing $icoPart."
+          $iconFileName = "${{ matrix.icon }}"
+          if ($iconFileName -match '^wezterm-icon-(.+)\.ico$') {
+              $icoPart = $matches[1]
           }
+          else {
+              Write-Warning "Skipping unexpected icon file name format: $iconFileName"
+              return
+          }
+
+          # New folder name combining version and icon part
+          $newFolderName = "WezTerm-windows-$icoPart-$wezterm_version"
+
+          Write-Host "Processing icon '$icoPart'..."
+
+          Copy-Item -Path $extractedFolder -Destination $newFolderName -Recurse
+
+          $exePath = Join-Path -Path $newFolderName -ChildPath "wezterm-gui.exe"
+          $iconPath = Join-Path -Path $altIconsDir -ChildPath $iconFileName
+
+          Write-Host "Patching executable icon using rcedit: $exePath with icon $iconPath"
+          ~\scoop\shims\rcedit.exe $exePath --set-icon $iconPath
+
+          Write-Host "Done processing $icoPart."
+
+          Write-Output "icon_name=$icoPart" >> $env:GITHUB_OUTPUT
+          Write-Output "folder_name=$newFolderName" >> $env:GITHUB_OUTPUT
 
           # Clean up: Remove the original zip and extracted folder, keeping only the new zip files
           Write-Host "Cleaning up original files..."
           Remove-Item -Recurse -Force -Path $extractedFolder
 
-          Write-Host "All icons processed and cleanup complete."
-
       - name: "Upload artifact"
         uses: actions/upload-artifact@v4
         with:
-          name: "windows"
+          name: folder_name
+
           if-no-files-found: ignore
           path: |
-            WezTerm-*.zip
-          retention-days: 5
+            folder_name
+          retention-days: 2
 
