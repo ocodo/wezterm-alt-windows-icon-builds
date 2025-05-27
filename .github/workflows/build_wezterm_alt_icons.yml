@@ -43,6 +43,7 @@ jobs:
           export wezterm_windows_zip_url="https://github.com/wezterm/wezterm/releases/download/${wezterm_version}/WezTerm-windows-${wezterm_version}.zip"
           curl -Lso wezterm_windows.zip "$wezterm_windows_zip_url"
           unzip wezterm_windows.zip
+          rm wezterm_windows.zip
 
       - name: "Create .ico files"
         shell: bash
@@ -59,14 +60,9 @@ jobs:
           $wezterm_version = "${{ steps.get_wezterm_zip.outputs.wezterm_version }}"
           Write-Host "wezterm_version = $wezterm_version"
 
-          # Set zip file name and folder name based on version
-          $zipFile = "WezTerm-windows-$wezterm_version.zip"
+          # Set extracted folder name based on version
           $extractedFolder = "WezTerm-windows-$wezterm_version"
           $altIconsDir = ".alt-icons"
-
-          # Extract the zip file once
-          Write-Host "Extracting $zipFile ..."
-          Expand-Archive -Path $zipFile -DestinationPath . -Force
 
           # Process each .ico file in the .alt-icons directory
           Get-ChildItem -Path $altIconsDir -Filter "wezterm-icon-*.ico" | ForEach-Object {
@@ -118,7 +114,6 @@ jobs:
 
           # Clean up: Remove the original zip and extracted folder, keeping only the new zip files
           Write-Host "Cleaning up original files..."
-          Remove-Item -Force -Path $zipFile
           Remove-Item -Recurse -Force -Path $extractedFolder
 
           Write-Host "All icons processed and cleanup complete."
