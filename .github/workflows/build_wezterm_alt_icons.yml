@@ -31,6 +31,12 @@ jobs:
       - name: "Checkout Local Repo"
         uses: actions/checkout@v4
 
+      - name: "Remote Debugging"
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debugging }}
+        with:
+          detached: true
+
       - name: "Install Rust"
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -48,21 +54,20 @@ jobs:
             .cargo/config
           key: "cargo-deps-${{ hashFiles('**/Cargo.lock') }}"
 
-      - name: "Install ripgrep"
-        run: |
-          cargo install ripgrep
-
       - name: "Fetch WezTerm Source"
         shell: bash
         run: |
-          export wezterm_version="$(curl -sv "https://github.com/wezterm/wezterm/releases/latest" 2>&1 | rg "< location:.*/tag/(.*)$" --replace '$1')"
-          echo "wezterm_version=$wezterm_version" >> $GITHUB_OUTPUT
+          export wezterm_version="$(curl -sv "https://github.com/wezterm/wezterm/releases/latest" 2>&1 \
+            | grep -Ei "< Location: https://github.com/wezterm/wezterm/releases/tag/.*$" \
+            | sed -e "s|< Location: https://github.com/wezterm/wezterm/releases/tag/||")"
+          echo "wezterm_version=$wezterm_version" | tee -a $GITHUB_OUTPUT
           export wezterm_src_tar_url="https://github.com/wezterm/wezterm/releases/download/${wezterm_version}/wezterm-${wezterm_version}-src.tar.gz"
           echo "$wezterm_src_tar_url"
           curl -Lso wezterm_source.tar.gz "$wezterm_src_tar_url"
-          tar xf wezterm_source.tar.gz
-          mv -v "wezterm-${wezterm_version}"/* . # Move files to pwd
 
+          export MSYS=winsymlinks:lnk
+          tar xzf wezterm_source.tar.gz
+          mv -v "wezterm-${wezterm_version}"/* . # Move files to pwd
 
           # inspect and salvage wezterm/wezterm .github path
           if [[ -d "wezterm-${wezterm_version}"/.github ]]; then
@@ -78,10 +83,6 @@ jobs:
           rm -rf "wezterm-${wezterm_version}"
           ls -lahF
 
-      - name: "Remote Debugging"
-        uses: mxschmitt/action-tmate@v3
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debugging }}
-
       - name: "Vendor dependecies"
         if: steps.cache-cargo-vendor.outputs.cache-hit != 'true'
         shell: bash
@@ -92,21 +93,42 @@ jobs:
         run: |
           magick -define icon:auto-resize=512,256,128,64,48 ${{ matrix.icon }} assets/Windows/terminal.ico
 
-      - name: "Build WezTerm"
+      - name: "Cargo update"
         shell: cmd
         run: |
           SET PATH=C:\Strawberry\perl\bin;%PATH%
           cargo update
+
+      - name: "Build WezTerm"
+        shell: cmd
+        run: |
+          SET PATH=C:\Strawberry\perl\bin;%PATH%
           cargo build -p wezterm --release
+          
+      - name: "Build WezTerm-Gui"
+        shell: cmd
+        run: |
+          SET PATH=C:\Strawberry\perl\bin;%PATH%
           cargo build -p wezterm-gui --release
+          
+      - name: "Build WezTerm-Mux-Server"
+        shell: cmd
+        run: |
+          SET PATH=C:\Strawberry\perl\bin;%PATH%
           cargo build -p wezterm-mux-server --release
+          
+      - name: "Build Strip-Ansi-Escapes"
+        shell: cmd
+        run: |
+          SET PATH=C:\Strawberry\perl\bin;%PATH%
           cargo build -p strip-ansi-escapes --release
 
       - name: "Review Build"
         shell: bash
         run: |
           echo "- - -"
-          find . | grep -E "(zip|exe)"
+          find target/release
+          echo "- - -"
 
       - name: "Run ci/deploy.sh"
         shell: bash
