@@ -61,12 +61,12 @@ jobs:
 
       - id: set-matrix
         run: |
-          echo "matrix=$(echo "[$(
+          echo "matrix="$(echo "[$(
             for a in .alt-icons/*
             do
-                    echo "\"$a\","
+                    print "\"$a\","
             done
-          )]" | sed -e "s|,\]|\]|" | jq)" >> $GITHUB_OUTPUT
+          )]" | sed -e "s|,\]|\]|")" >> $GITHUB_OUTPUT
       - uses: actions/upload-artifact@v4
         with:
           name: alt-icons.zip
