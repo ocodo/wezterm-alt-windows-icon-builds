@@ -30,7 +30,7 @@ jobs:
 
           scoop install imagemagick rcedit resource-hacker
 
-      - name: "Fetch WezTerm Windows Zip"
+      - name: "GetWezTermWindowsZip"
         shell: bash
         run: |
           export wezterm_version="$(curl -sv "https://github.com/wezterm/wezterm/releases/latest" 2>&1 \
@@ -51,15 +51,84 @@ jobs:
             magick -background transparent -define icon:auto-resize="16,32,48,64,96,128,256" "$image" "${image/png/ico}"
           done
 
-      - name: "Copy wezterm_windows.zip for each ico and patch"
+      - name: "Create Zip Packages of WezTerm with each Icon"
+        env:
+          wezterm_version: ${{ steps.GetWezTermWindowsZip.outputs.wezterm_version }}
+        shell: pwsh
         run: |
-          echo "TODO"
+          # Import the wezterm_version from the previous step's output
+          $wezterm_version = "$env:wezterm_version"
 
-   #   - name: "Upload artifact"
-   #     uses: actions/upload-artifact@v3
-   #     with:
-   #       name: "windows"
-   #       path: |
-   #         WezTerm-*.zip
-   #       retention-days: 5
+          # Set zip file name and folder name based on version
+          $zipFile = "WezTerm-windows-$wezterm_version.zip"
+          $extractedFolder = "WezTerm-windows-$wezterm_version"
+          $altIconsDir = ".alt-icons"
+
+          # Extract the zip file once
+          Write-Host "Extracting $zipFile ..."
+          Expand-Archive -Path $zipFile -DestinationPath . -Force
+
+          # Process each .ico file in the .alt-icons directory
+          Get-ChildItem -Path $altIconsDir -Filter "wezterm-icon-*.ico" | ForEach-Object {
+
+              # Extract the unique part of the icon file name (e.g., 'Shine' from 'wezterm-icon-Shine.ico')
+              $iconFileName = $_.Name
+              if ($iconFileName -match '^wezterm-icon-(.+)\.ico$') {
+                  $icoPart = $matches[1]
+              }
+              else {
+                  Write-Warning "Skipping unexpected icon file name format: $iconFileName"
+                  return
+              }
+
+              # New folder name combining version and icon part
+              $newFolderName = "$extractedFolder-$icoPart"
+
+              Write-Host "Processing icon '$icoPart'..."
+
+              # Remove the existing folder if it exists
+              if (Test-Path $newFolderName) {
+                  Write-Host "Removing existing folder $newFolderName"
+                  Remove-Item -Recurse -Force -Path $newFolderName
+              }
+
+              # Copy the extracted folder to the new folder
+              Copy-Item -Path $extractedFolder -Destination $newFolderName -Recurse
+
+              # Define the path to the executable and icon file
+              $exePath = Join-Path -Path $newFolderName -ChildPath "wezterm-gui.exe"
+              $iconPath = Join-Path -Path $altIconsDir -ChildPath $iconFileName
+
+              # Use rcedit to patch the executable with the new icon
+              Write-Host "Patching executable icon using rcedit: $exePath with icon $iconPath"
+              rcedit.exe $exePath --set-icon $iconPath
+
+              # Create a zip file from the new folder
+              $zipOut = "$newFolderName.zip"
+              if (Test-Path $zipOut) {
+                  Write-Host "Removing existing zip $zipOut"
+                  Remove-Item -Force $zipOut
+              }
+
+              Write-Host "Creating zip archive $zipOut ..."
+              Compress-Archive -Path $newFolderName -DestinationPath $zipOut -Force
+
+              Write-Host "Done processing $icoPart."
+          }
+
+          # Clean up: Remove the original zip and extracted folder, keeping only the new zip files
+          Write-Host "Cleaning up original files..."
+          Remove-Item -Force -Path $zipFile
+          Remove-Item -Recurse -Force -Path $extractedFolder
+
+          Write-Host "All icons processed and cleanup complete."
+
+
+      - name: "Upload artifact"
+        uses: actions/upload-artifact@v3
+        with:
+          name: "windows"
+          path: |
+            WezTerm-*.zip
+          retention-days: 5
 
