@@ -48,7 +48,7 @@ jobs:
         run: |
           for image in .alt-icons/*png
           do
-            magick -background transparent -define icon:auto-resize="16,24,32,48,64,128,256" "$image" "${image/png/ico}"
+            magick -background transparent -define icon:auto-resize="16,32,48,64,96,128,256" "$image" "${image/png/ico}"
           done
 
       - name: "Copy wezterm_windows.zip for each ico and patch"
