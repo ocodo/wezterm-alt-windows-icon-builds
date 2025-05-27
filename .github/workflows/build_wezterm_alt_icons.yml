@@ -57,36 +57,20 @@ jobs:
           echo "wezterm_version=$wezterm_version" >> $GITHUB_OUTPUT
           curl -Lso wezterm_source.tar.gz "https://github.com/wezterm/wezterm/archive/refs/tags/${wezterm_version}.tar.gz"
           tar xf wezterm_source.tar.gz
+          mv -v "wezterm-${wezterm_version}"/* .
           rm -rf "wezterm-${wezterm_version}"
-          ls -lahF ~/
+          ls -lahF
 
       - name: "Remote Debugging"
         uses: mxschmitt/action-tmate@v3
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.debugging }}
 
-      - name: "PWD Path check pwsh"
-        run: |
-          echo $env:cd
-          echo $env:HOMEPATH
-          dir
-
-      - name: "PWD Path check cmd"
+      - name: "Vendor dependecies"
+        if: steps.cache-cargo-vendor.outputs.cache-hit != 'true'
         run: |
           echo %cd%
           echo %HOMEPATH%
           dir
-
-      - name: "PWD Path check bash"
-        shell: bash
-        run: |
-          pwd
-          echo $HOME
-          ls -l
-
-      - name: "Vendor dependecies"
-        if: steps.cache-cargo-vendor.outputs.cache-hit != 'true'
-        run: |
-
           cargo vendor --locked --versioned-dirs >> .cargo\config
 
       - name: "Replace terminal.ico"
