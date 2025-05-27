@@ -67,9 +67,8 @@ jobs:
 
       - name: "Vendor dependecies"
         if: steps.cache-cargo-vendor.outputs.cache-hit != 'true'
-        shell: bash
+        shell: cmd
         run: |
-          echo "$PWD"
           cargo vendor --locked --versioned-dirs >> .cargo/config
 
       - name: "Replace terminal.ico"
