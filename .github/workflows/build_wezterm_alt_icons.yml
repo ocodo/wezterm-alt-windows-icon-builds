@@ -158,17 +158,18 @@ jobs:
 
           Write-Host "Done processing $icoPart."
 
-          echo "icon_name=$icoPart" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-          echo "folder_name=$newFolderName" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-
           # Clean up: Remove the original zip and extracted folder, keeping only the new zip files
           Write-Host "Cleaning up original files..."
           Remove-Item -Recurse -Force -Path $extractedFolder
 
+      - run: |
+          echo "folder name: ${{ steps.zip-windows-package.outputs.folder_name }}"
+
+
       - name: "Upload artifact"
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.zip-windows-package.outputs.folder_name }}.zip
-          path: ${{ steps.zip-windows-package.outputs.folder_name }}
+          name: "WezTerm-windows-${{ matrix.icon.name }}-${{ needs.get-wezterm.outputs.wezterm-version }}.zip"
+          path: "WezTerm-windows-${{ matrix.icon.name }}-${{ needs.get-wezterm.outputs.wezterm-version }}"
           retention-days: 2
 
