@@ -149,7 +149,7 @@ jobs:
 
           Write-Host "Processing '$icoPart'..."
 
-          Copy-Item -Path $extractedFolder -Destination $newFolderName -Recurse
+          Move-Item -Path wezterm -Destination $newFolderName
 
           $exePath = Join-Path -Path $newFolderName -ChildPath "wezterm-gui.exe"
           $icoPath = Join-Path -Path $altIconsDir -ChildPath $icoFileName
