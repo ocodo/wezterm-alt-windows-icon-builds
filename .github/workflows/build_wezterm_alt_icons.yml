@@ -73,7 +73,7 @@ jobs:
           matrix = Dir.glob('alt-icons/wezterm-icon-*.png').map do |file|
             {
               file: file,
-              ico: File.basename(file).sub(/\.png$/, 'ico'),
+              ico: File.basename(file).sub(/\.png$/, '.ico'),
               name: File.basename(file).sub(/^wezterm-icon-/, '').sub(/\.png$/, '')
             }
           end
@@ -122,7 +122,7 @@ jobs:
           Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
           scoop install imagemagick rcedit
 
-      - name: "🏗️  ${{ matrix.icon.file }} → ${{ matrix.icon.ico }}"
+      - name: "${{ matrix.icon.file }} → ${{ matrix.icon.ico }}"
         shell: bash
         run: |
           export image="${{ matrix.icon.file }}"
@@ -134,28 +134,25 @@ jobs:
         run: |
           # Import the wezterm_version from the previous step's output
           $wezterm_version = "${{ needs.get-wezterm.outputs.version }}"
-          Write-Host "🖥️  wezterm_version=$wezterm_version"
+          Write-Host "🖥️ wezterm_version=$wezterm_version"
 
-          $iconFileName = "${{ matrix.icon.file }}"
-          $icoFileName = "${{ matrix.icon.ico }}"
-          $icoPart = "${{ matrix.icon.name }}"
+          $IconName = "${{ matrix.icon.name }}"
 
           # New folder name combining version and icon part
-          $newFolderName = "WezTerm-windows-$icoPart-$wezterm_version"
+          $newFolderName = "WezTerm-windows-$IconName-$wezterm_version"
 
-          Write-Host "🏗️  Processing '$icoPart'..."
+          Write-Host "Processing '$IconName'..."
 
           Move-Item -Path wezterm -Destination $newFolderName
 
           $exePath = Join-Path -Path $newFolderName -ChildPath "wezterm-gui.exe"
-          $icoPath = Join-Path -Path alt-icons -ChildPath $icoFileName
 
-          Write-Host "Patching executable icon using rcedit: $exePath with icon $icoPath"
-          ~\scoop\shims\rcedit.exe $exePath --set-icon $icoPath
+          Write-Host "Patching executable icon using rcedit: $exePath with icon ${{ matrix.icon.ico }}"
+          ~\scoop\shims\rcedit.exe $exePath --set-icon ${{ matrix.icon.ico }}
 
-          Write-Host "🎉  Done processing $icoPart."
+          Write-Host "🎉 Done processing $IconName."
 
-      - name: "🍹  Upload artifact"
+      - name: "🍹 Upload artifact"
         uses: actions/upload-artifact@v4
         with:
           name: "WezTerm-windows-${{ matrix.icon.name }}-${{ env.version }}.zip"
