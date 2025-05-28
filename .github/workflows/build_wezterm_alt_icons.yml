@@ -78,7 +78,7 @@ jobs:
           path: alt-icons
           retention-days: 2
 
-  Patch_WezTerm_Icon:
+  patch-wezterm-icon:
     needs: 
       - get-wezterm
       - icon-matrix
@@ -90,10 +90,16 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: wezterm.zip
+          path: wezterm
 
       - uses: actions/download-artifact@v4
         with:
           name: alt-icons.zip
+          path: alt-icons
+      
+      - name: "Check downloads"
+        run: | 
+          ls -lahF . wezterm alt-icons
 
       - name: "Remote Debugging"
         uses: mxschmitt/action-tmate@v3
@@ -115,7 +121,7 @@ jobs:
           export image="${{ matrix.icon }}"
           magick -background transparent -define icon:auto-resize="16,32,48,64,96,128,256" "$image" "${image/png/ico}"
 
-      - name: "Create Zip Packages of WezTerm with each Icon"
+      - name: "Create Zip Package with ${{ matrix.icon }}"
         id: zip-windows-package
         shell: pwsh
         run: |
