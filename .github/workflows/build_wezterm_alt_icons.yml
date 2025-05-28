@@ -75,6 +75,10 @@ jobs:
           matrix = Dir.glob('alt-icons/wezterm-icon-*.png').map do |file|
             {
               'file' => file,
+
+              'ico'  => File.basename(file)
+                          .sub(/\.png$/, 'ico')
+
               'name' => File.basename(file)
                           .sub(/^wezterm-icon-/, '')
                           .sub(/\.png$/, '')
@@ -131,9 +135,9 @@ jobs:
         shell: bash
         run: |
           export image="${{ matrix.icon.file }}"
-          magick -background transparent -define icon:auto-resize="16,32,48,64,96,128,256" "$image" "${image/png/ico}"
+          magick -background transparent -define icon:auto-resize="16,32,48,64,96,128,256" "$image" "${{ matrix.icon.ico }}"
 
-      - name: "Create Zip Package with ${{ matrix.icon.name }}"
+      - name: "Create Zip Package with ${{ matrix.icon.ico }}"
         id: zip-windows-package
         shell: pwsh
         run: |
@@ -145,26 +149,21 @@ jobs:
           $extractedFolder = "WezTerm-windows-$wezterm_version"
 
           $iconFileName = "${{ matrix.icon.file }}"
-          if ($iconFileName -match '^wezterm-icon-(.+)\.ico$') {
-              $icoPart = $matches[1]
-          }
-          else {
-              Write-Warning "Skipping unexpected icon file name format: $iconFileName"
-              return
-          }
+          $icoFileName = "${{ matrix.icon.ico }}"
+          $icoPart = "${{ matrix.icon.name }}"
 
           # New folder name combining version and icon part
           $newFolderName = "WezTerm-windows-$icoPart-$wezterm_version"
 
-          Write-Host "Processing icon '$icoPart'..."
+          Write-Host "Processing '$icoPart'..."
 
           Copy-Item -Path $extractedFolder -Destination $newFolderName -Recurse
 
           $exePath = Join-Path -Path $newFolderName -ChildPath "wezterm-gui.exe"
-          $iconPath = Join-Path -Path $altIconsDir -ChildPath $iconFileName
+          $icoPath = Join-Path -Path $altIconsDir -ChildPath $icoFileName
 
-          Write-Host "Patching executable icon using rcedit: $exePath with icon $iconPath"
-          ~\scoop\shims\rcedit.exe $exePath --set-icon $iconPath
+          Write-Host "Patching executable icon using rcedit: $exePath with icon $icoPath"
+          ~\scoop\shims\rcedit.exe $exePath --set-icon $icoPath
 
           Write-Host "Done processing $icoPart."
 
