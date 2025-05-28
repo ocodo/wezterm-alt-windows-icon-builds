@@ -14,10 +14,7 @@ jobs:
     outputs:
       version: ${{ steps.get-wezterm-latest.outputs.version }}
     steps:
-      - name: Get Dependencies
-        run: |
-          sudo apt update
-          sudo apt install ripgrep
+
       - name: Get WezTerm Latest Release Version Tag
         id: get-wezterm-latest
         run: |
