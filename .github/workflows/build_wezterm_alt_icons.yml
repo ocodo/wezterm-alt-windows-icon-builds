@@ -98,6 +98,7 @@ jobs:
           path: alt-icons
       
       - name: "Check downloads"
+        shell: bash
         run: | 
           ls -lahF . wezterm alt-icons
 
