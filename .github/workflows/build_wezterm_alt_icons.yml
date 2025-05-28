@@ -12,24 +12,30 @@ jobs:
   get-wezterm:
     runs-on: ubuntu-latest
     outputs:
-      wezterm-version: ${{ steps.get-wezterm-zip.wezterm_version }}
+      version: ${{ steps.get-wezterm-latest.outputs.version }}
     steps:
       - name: Get Dependencies
         run: |
           sudo apt update
           sudo apt install ripgrep
+      - name: Get WezTerm Latest Release Version Tag
+        id: get-wezterm-latest
+        run: |
+          # Fetch the latest release from wezterm/wezterm
+          release_json=$(curl -sS -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+                         | "https://api.github.com/repos/wezterm/wezterm/releases/latest")
+
+          version=$(echo "$release_json" | jq -r .tag_name)
+
+          # Output the tag name using the new syntax
+          echo "version=$version" >> $GITHUB_OUTPUT
+
       - name: Get WezTerm Windows Zip
         id: get-wezterm-zip
         run: |
-          export wezterm_version="$(
-            curl -sv "https://github.com/wezterm/wezterm/releases/latest" 2>&1 \
-            | rg "^< location:.*?/tag/([\w-]*)" --replace '$1' \
-            | tr -d '\n' \
-            | tr -d '\r'
-          )"
+          export wezterm_version="${{ steps.get-wezterm-latest.outputs.version }}"
 
           echo "wezterm_version=$wezterm_version"
-          echo "wezterm_version=$wezterm_version" >> $GITHUB_OUTPUT
 
           export wezterm_folder="WezTerm-windows-${wezterm_version}"
           echo "wezterm_folder=$wezterm_folder"
@@ -45,7 +51,7 @@ jobs:
 
       - name: Debug version capture step one
         run: |
-          echo "version: ${{ steps.get-wezterm-zip.outputs.wezterm_version }}"
+          echo "version: ${{ steps.get-wezterm-latest.outputs.version }}"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -92,7 +98,7 @@ jobs:
       - get-wezterm
       - icon-matrix
     env:
-      wezterm_version: ${{ needs.get-wezterm.outputs.wezterm-version }}
+      version: ${{ needs.get-wezterm.outputs.version }}
     strategy:
       matrix:
         icon: ${{ fromJson(needs.icon-matrix.outputs.matrix) }}
@@ -133,7 +139,7 @@ jobs:
         shell: pwsh
         run: |
           # Import the wezterm_version from the previous step's output
-          $wezterm_version = "${{ needs.get-wezterm.outputs.wezterm-version }}"
+          $wezterm_version = "${{ needs.get-wezterm.outputs.version }}"
           Write-Host "wezterm_version = $wezterm_version"
 
           # Set extracted folder name based on version
@@ -170,7 +176,7 @@ jobs:
       - name: "Upload artifact"
         uses: actions/upload-artifact@v4
         with:
-          name: "WezTerm-windows-${{ matrix.icon.name }}-${{ env.wezterm_version }}.zip"
-          path: "WezTerm-windows-${{ matrix.icon.name }}-${{ env.wezterm_version }}"
+          name: "WezTerm-windows-${{ matrix.icon.name }}-${{ env.version }}.zip"
+          path: "WezTerm-windows-${{ matrix.icon.name }}-${{ env.version }}"
           retention-days: 2
 
