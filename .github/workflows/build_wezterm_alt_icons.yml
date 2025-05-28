@@ -164,8 +164,10 @@ jobs:
           Remove-Item -Recurse -Force -Path $extractedFolder
 
       - run: |
-          echo "version: ${{ needs.get-wezterm.outputs.wezterm-version }}"
+          echo "version: ${{ env.wezterm_version }}"
           echo "icon: ${{ matrix.icon.name }}"
+          echo "#### FULL ENV ####"
+          set
 
       - name: "Upload artifact"
         uses: actions/upload-artifact@v4
