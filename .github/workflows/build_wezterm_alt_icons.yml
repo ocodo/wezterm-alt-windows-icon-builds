@@ -12,15 +12,15 @@ jobs:
   get-wezterm:
     runs-on: ubuntu-latest
     outputs:
-      wezterm_version: ${{ steps.get_wezterm_zip.wezterm_version }}
-      wezterm_folder: ${{ steps.get_wezterm_zip.wezterm_folder }}
+      wezterm-version: ${{ steps.get-wezterm-zip.wezterm_version }}
+      wezterm-folder: ${{ steps.get-wezterm-zip.wezterm_folder }}
     steps:
       - name: Get Dependencies
         run: |
           sudo apt update
           sudo apt install ripgrep
       - name: Get WezTerm Windows Zip
-        id: get_wezterm_zip
+        id: get-wezterm-zip
         run: |
           export wezterm_version="$(
             curl -sv "https://github.com/wezterm/wezterm/releases/latest" 2>&1 \
@@ -79,7 +79,9 @@ jobs:
           retention-days: 2
 
   Patch_WezTerm_Icon:
-    needs: icon-matrix
+    needs: 
+      - get-wezterm
+      - icon-matrix
     strategy:
       matrix:
         icon: ${{ fromJson(needs.icon-matrix.outputs.matrix) }}
@@ -88,6 +90,10 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: wezterm.zip
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: alt-icons.zip
 
       - name: "Remote Debugging"
         uses: mxschmitt/action-tmate@v3
@@ -114,7 +120,7 @@ jobs:
         shell: pwsh
         run: |
           # Import the wezterm_version from the previous step's output
-          $wezterm_version = "${{ steps.get_wezterm_zip.outputs.wezterm_version }}"
+          $wezterm_version = "${{ needs.get-wezterm.outputs.wezterm-version }}"
           Write-Host "wezterm_version = $wezterm_version"
 
           # Set extracted folder name based on version
@@ -154,10 +160,7 @@ jobs:
       - name: "Upload artifact"
         uses: actions/upload-artifact@v4
         with:
-          name: folder_name
-
-          if-no-files-found: ignore
-          path: |
-            folder_name
+          name: ${{ steps.zip-windows-package.outputs.folder_name }}.zip
+          path: ${{ steps.zip-windows-package.outputs.folder_name }}
           retention-days: 2
 
