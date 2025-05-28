@@ -43,6 +43,10 @@ jobs:
           mv $wezterm_folder wezterm
           rm temp.zip
 
+      - name: Debug version capture step one
+        run: |
+          echo "version: ${{ steps.get-wezterm-zip.outputs.wezterm_version }}"
+
       - uses: actions/upload-artifact@v4
         with:
           name: wezterm.zip
@@ -162,12 +166,6 @@ jobs:
           # Clean up: Remove the original zip and extracted folder, keeping only the new zip files
           Write-Host "Cleaning up original files..."
           Remove-Item -Recurse -Force -Path $extractedFolder
-
-      - run: |
-          echo "version: ${{ env.wezterm_version }}"
-          echo "icon: ${{ matrix.icon.name }}"
-          echo "#### FULL ENV ####"
-          set
 
       - name: "Upload artifact"
         uses: actions/upload-artifact@v4
