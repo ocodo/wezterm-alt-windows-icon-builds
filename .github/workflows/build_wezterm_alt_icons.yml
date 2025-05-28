@@ -71,14 +71,9 @@ jobs:
 
           matrix = Dir.glob('alt-icons/wezterm-icon-*.png').map do |file|
             {
-              'file' => file,
-
-              'ico'  => File.basename(file)
-                          .sub(/\.png$/, 'ico')
-
-              'name' => File.basename(file)
-                          .sub(/^wezterm-icon-/, '')
-                          .sub(/\.png$/, '')
+              file: file,
+              ico: File.basename(file).sub(/\.png$/, 'ico'),
+              name: File.basename(file).sub(/^wezterm-icon-/, '').sub(/\.png$/, '')
             }
           end
 
