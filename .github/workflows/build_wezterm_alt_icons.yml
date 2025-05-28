@@ -60,28 +60,22 @@ jobs:
         uses: actions/checkout@v4
 
       - id: set-matrix
-        shell: python {0}      
+        shell: ruby {0}
         run: |
-          import json
-          import os
-          from pathlib import Path
-
-          # Get all files in alt-icons directory
-          alt_icons_dir = Path("alt-icons")
-          icon_files = [f for f in alt_icons_dir.iterdir() if f.is_file()]
-
-          # Build the matrix data
-          matrix = []
-          for file in icon_files:
-              name = file.stem.replace("wezterm-icon-", "")
-              matrix.append({
-                  "file": str(file),
-                  "name": name
-              })
-
-          # Output in GitHub Actions format
-          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-              f.write(f"matrix={json.dumps(matrix)}\n")
+          require 'json'
+          
+          matrix = Dir.glob('alt-icons/wezterm-icon-*.png').map do |file|
+            {
+              'file' => file,
+              'name' => File.basename(file)
+                          .sub(/^wezterm-icon-/, '')
+                          .sub(/\.png$/, '')
+            }
+          end
+          
+          File.open(ENV['GITHUB_OUTPUT'], 'a') do |f|
+            f.puts "matrix=#{matrix.to_json}"
+          end
 
       - id: upload-alt-icons
         uses: actions/upload-artifact@v4
