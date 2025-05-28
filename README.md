@@ -9,10 +9,15 @@ For each custom icon listed below, we:
 ## Want to contribute an icon?
 
 - Open a Pull Request with your PNG icon
-- Icon requirements:
-  - Size between 512×512 and 1024×1024 pixels
+- Icon requirements checklist:
+  - Size between 400x400 and 1024×1024 pixels
   - PNG format
-- Get community support (👍 reactions) for your submission
+  - Transparent background
+  - No unnecessary padding
+
+- Get support 👍 for your submission
+  - Add previews to the PR discussion
+  - Get commuinity feedback
 
 ## About These Icons
 
