@@ -87,6 +87,8 @@ jobs:
     needs:
       - get-wezterm
       - icon-matrix
+    env:
+      wezterm_version: ${{ needs.get-wezterm.outputs.wezterm-version }}
     strategy:
       matrix:
         icon: ${{ fromJson(needs.icon-matrix.outputs.matrix) }}
@@ -165,11 +167,10 @@ jobs:
           echo "version: ${{ needs.get-wezterm.outputs.wezterm-version }}"
           echo "icon: ${{ matrix.icon.name }}"
 
-
       - name: "Upload artifact"
         uses: actions/upload-artifact@v4
         with:
-          name: "WezTerm-windows-${{ matrix.icon.name }}-${{ needs.get-wezterm.outputs.wezterm-version }}.zip"
-          path: "WezTerm-windows-${{ matrix.icon.name }}-${{ needs.get-wezterm.outputs.wezterm-version }}"
+          name: "WezTerm-windows-${{ matrix.icon.name }}-${{ env.wezterm_version }}.zip"
+          path: "WezTerm-windows-${{ matrix.icon.name }}-${{ env.wezterm_version }}"
           retention-days: 2
 
