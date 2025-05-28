@@ -64,7 +64,8 @@ jobs:
       - name: "Checkout Local Repo"
         uses: actions/checkout@v4
 
-      - id: set-matrix
+      - name: Generate Icon Matrix
+        id: set-matrix
         shell: ruby {0}
         run: |
           require 'json'
