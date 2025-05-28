@@ -13,7 +13,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       wezterm-version: ${{ steps.get-wezterm-zip.wezterm_version }}
-      wezterm-folder: ${{ steps.get-wezterm-zip.wezterm_folder }}
     steps:
       - name: Get Dependencies
         run: |
@@ -163,7 +162,8 @@ jobs:
           Remove-Item -Recurse -Force -Path $extractedFolder
 
       - run: |
-          echo "folder name: ${{ steps.zip-windows-package.outputs.folder_name }}"
+          echo "version: ${{ needs.get-wezterm.outputs.wezterm-version }}"
+          echo "icon: ${{ matrix.icon.name }}"
 
 
       - name: "Upload artifact"
