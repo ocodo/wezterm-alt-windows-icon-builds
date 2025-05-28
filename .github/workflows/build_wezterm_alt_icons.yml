@@ -63,7 +63,7 @@ jobs:
         shell: ruby {0}
         run: |
           require 'json'
-          
+
           matrix = Dir.glob('alt-icons/wezterm-icon-*.png').map do |file|
             {
               'file' => file,
@@ -72,7 +72,7 @@ jobs:
                           .sub(/\.png$/, '')
             }
           end
-          
+
           File.open(ENV['GITHUB_OUTPUT'], 'a') do |f|
             f.puts "matrix=#{matrix.to_json}"
           end
@@ -85,7 +85,7 @@ jobs:
           retention-days: 2
 
   patch-wezterm-icon:
-    needs: 
+    needs:
       - get-wezterm
       - icon-matrix
     strategy:
