@@ -23,7 +23,7 @@ For each custom icon listed below, we:
 
 See original discussion: [wezterm/wezterm#2396](https://github.com/wezterm/wezterm/issues/2396)
 
-> Special thanks to all icon creators for their contributions.  
+> Special thanks to all icon creators for their contributions.
 > If you're an icon creator and would like your work removed for any reason, please contact [@jasonm23](https://github.com/jasonm23) in the above thread.
 
 ## Available Alternate Icons
@@ -34,20 +34,23 @@ See original discussion: [wezterm/wezterm#2396](https://github.com/wezterm/wezte
 
 <img width="256" alt="Shine Icon" src="alt-icons/wezterm-icon-Shine.png" />
 
-### Base Icon
-
-**Creator:** [@grapao](https://github.com/grapao)
-
-<img width="256" alt="Base Icon" src="alt-icons/wezterm-icon-Base.png" />
-
 ### Flatter Icon
 
 **Creator:** [@mikker](https://github.com/mikker)
 
 <img width="256" alt="Flatter Icon" src="alt-icons/wezterm-icon-Flatter.png" />
 
+### Base Icon
+
+**Creator:** [@grapao](https://github.com/grapao)
+
+<img width="256" alt="Base Icon" src="alt-icons/wezterm-icon-Base.png" />
+
 ### Forest Icon
 
 **Creator:** [@grapao](https://github.com/grapao)
 
 <img width="256" alt="Forest Icon" src="alt-icons/wezterm-icon-Forest.png" />
+
+
+
