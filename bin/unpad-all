@@ -1,0 +1,8 @@
+#!/bin/bash
+
+for file in alt-icons/*png; do
+  convert "$file" -trim -background none -gravity center "$file"
+  echo "📐 unpadded: $file"
+done
+
+echo "✅ Done! image padding cropped"

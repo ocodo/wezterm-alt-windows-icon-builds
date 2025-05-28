@@ -158,8 +158,8 @@ jobs:
 
           Write-Host "Done processing $icoPart."
 
-          Write-Output "icon_name=$icoPart" >> $env:GITHUB_OUTPUT
-          Write-Output "folder_name=$newFolderName" >> $env:GITHUB_OUTPUT
+          echo "icon_name=$icoPart" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          echo "folder_name=$newFolderName" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
           # Clean up: Remove the original zip and extracted folder, keeping only the new zip files
           Write-Host "Cleaning up original files..."
