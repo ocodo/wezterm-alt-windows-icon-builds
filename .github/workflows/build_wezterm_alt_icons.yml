@@ -120,11 +120,9 @@ jobs:
         shell: pwsh
         run: |
           Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
-          scoop bucket add extras
-
           scoop install imagemagick rcedit
 
-      - name: "Create .ico file"
+      - name: "🏗️ ${{ matrix.icon.file }} → ${{ matrix.icon.ico }}"
         shell: bash
         run: |
           export image="${{ matrix.icon.file }}"
@@ -136,10 +134,7 @@ jobs:
         run: |
           # Import the wezterm_version from the previous step's output
           $wezterm_version = "${{ needs.get-wezterm.outputs.version }}"
-          Write-Host "wezterm_version = $wezterm_version"
-
-          # Set extracted folder name based on version
-          $extractedFolder = "WezTerm-windows-$wezterm_version"
+          Write-Host "🖥️ wezterm_version=$wezterm_version"
 
           $iconFileName = "${{ matrix.icon.file }}"
           $icoFileName = "${{ matrix.icon.ico }}"
@@ -148,7 +143,7 @@ jobs:
           # New folder name combining version and icon part
           $newFolderName = "WezTerm-windows-$icoPart-$wezterm_version"
 
-          Write-Host "Processing '$icoPart'..."
+          Write-Host "🏗️ Processing '$icoPart'..."
 
           Move-Item -Path wezterm -Destination $newFolderName
 
@@ -158,13 +153,9 @@ jobs:
           Write-Host "Patching executable icon using rcedit: $exePath with icon $icoPath"
           ~\scoop\shims\rcedit.exe $exePath --set-icon $icoPath
 
-          Write-Host "Done processing $icoPart."
+          Write-Host "🎉 Done processing $icoPart."
 
-          # Clean up: Remove the original zip and extracted folder, keeping only the new zip files
-          Write-Host "Cleaning up original files..."
-          Remove-Item -Recurse -Force -Path $extractedFolder
-
-      - name: "Upload artifact"
+      - name: "🍹 Upload artifact"
         uses: actions/upload-artifact@v4
         with:
           name: "WezTerm-windows-${{ matrix.icon.name }}-${{ env.version }}.zip"
