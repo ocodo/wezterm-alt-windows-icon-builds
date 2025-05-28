@@ -61,13 +61,14 @@ jobs:
 
       - id: set-matrix
         run: |
-          echo "matrix="$(echo "[$(
+          echo "matrix=$(echo "[$(
             for a in .alt-icons/*
             do
                     echo "\"$a\","
             done
           )]" \
           | sed -e "s|,\]|\]|" \
+          | tr -d '\n' \
           | jq -c )" >> $GITHUB_OUTPUT
       - uses: actions/upload-artifact@v4
         with:
