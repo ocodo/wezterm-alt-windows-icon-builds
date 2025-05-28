@@ -1,3 +1,16 @@
+###
+### TODO
+### - Create tag/release: 
+### - requires commit:
+###   shipped.log.md - list of WezTerm Build versions (markdown)
+###
+### 
+### - regular commits: 
+###   - build scripting/tools
+### - release commits
+###   - new/updated icons
+###   - shipped.log.md
+
 name: WezTerm Windows Alt Icon Builds
 
 on:
