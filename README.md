@@ -1,36 +1,48 @@
-# WezTerm - Windows builds using alternative icons
+# WezTerm - Windows Builds with Alternative Icons
 
-**This repo** will sync with wezterm/weztern and compile a windows zip distro for each of a set of custom icons.
+This repository automatically syncs with [wezterm/wezterm](https://github.com/wezterm/wezterm) to fetch the latest Windows zip distribution and creates custom builds with alternative icons.
 
-If you want to add an icon png (`size <= 1024x1024 && size >= 512x512`) open a pull request, and get some 👍 for it!
+For each custom icon listed below, we:
+1. Create a patched version of `wezterm-gui.exe` with the icon
+2. Package it as a separate Windows zip file
 
-# Alternate Icons
+## Want to contribute an icon?
 
-see also wezterm/wezterm#2396
+- Open a Pull Request with your PNG icon
+- Icon requirements:
+  - Size between 512×512 and 1024×1024 pixels
+  - PNG format
+- Get community support (👍 reactions) for your submission
 
-> Dear icon creators, thank you for making these,  I didn't want them to go to waste.  
-> If you'd like them removed from the project, for whatever reason. You can let me know by @jasonm23 in wezterm/wezterm#2396
+## About These Icons
 
-### wezterm-icon-Shine.png
+See original discussion: [wezterm/wezterm#2396](https://github.com/wezterm/wezterm/issues/2396)
 
-credit: [@gf3](https://github.com/gf3)
+> Special thanks to all icon creators for their contributions.  
+> If you're an icon creator and would like your work removed for any reason, please contact [@jasonm23](https://github.com/jasonm23) in the above thread.
 
-  <img width="256" src=".alt-icons/wezterm-icon-Shine.png" />
+## Available Alternate Icons
 
-### wezterm-icon-Base.png
+### Shine Icon
 
-credit: [@grapao](https://github.com/grapao)
+**Creator:** [@gf3](https://github.com/gf3)
 
-  <img width="256" src=".alt-icons//wezterm-icon-Base.png" />
+<img width="256" alt="Shine Icon" src="alt-icons/wezterm-icon-Shine.png" />
 
-### wezterm-icon-Flatter.png
+### Base Icon
 
-credit: [@mikker](https://github.com/mikker)
+**Creator:** [@grapao](https://github.com/grapao)
 
-  <img width="256" src=".alt-icons//wezterm-icon-Flatter.png" />
+<img width="256" alt="Base Icon" src="alt-icons/wezterm-icon-Base.png" />
 
-### wezterm-icon-Forest.png
+### Flatter Icon
 
-credit: [@grapao](https://github.com/grapao)
+**Creator:** [@mikker](https://github.com/mikker)
 
-  <img width="256" src=".alt-icons/wezterm-icon-Forest.png" />
+<img width="256" alt="Flatter Icon" src="alt-icons/wezterm-icon-Flatter.png" />
+
+### Forest Icon
+
+**Creator:** [@grapao](https://github.com/grapao)
+
+<img width="256" alt="Forest Icon" src="alt-icons/wezterm-icon-Forest.png" />
