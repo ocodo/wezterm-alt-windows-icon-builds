@@ -21,11 +21,10 @@ jobs:
       - name: Get WezTerm Latest Release Version Tag
         id: get-wezterm-latest
         run: |
-          # Fetch the latest release from wezterm/wezterm
-          release_json=$(curl -sS -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-                         | "https://api.github.com/repos/wezterm/wezterm/releases/latest")
-
-          version=$(echo "$release_json" | jq -r .tag_name)
+          version=$(
+            curl -s "https://api.github.com/repos/wezterm/wezterm/releases/latest" \
+              | jq -r '.tag_name'
+          )
 
           # Output the tag name using the new syntax
           echo "version=$version" >> $GITHUB_OUTPUT
