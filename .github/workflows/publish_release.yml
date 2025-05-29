@@ -54,6 +54,14 @@ jobs:
           echo "Checking for tag '${release_tag}' via GitHub API..."
 
           tags_json=$(gh api repos/${{ github.repository }}/releases --jq '.[].tag_name')
+
+          # If no tags exist, just skip the check
+          if [ -z "$tags_json" ]; then
+            echo "No tags found, skipping release check."
+            echo "exists=false" >> $GITHUB_OUTPUT
+            exit 0  # Exit early if no tags are found
+          fi
+
           echo "Existing release tags:"
           echo "$tags_json"
 
