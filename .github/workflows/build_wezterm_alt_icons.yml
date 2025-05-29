@@ -1,6 +1,8 @@
 name: WezTerm Windows Alt Icon Builds
 
 on:
+  schedule:
+    - cron: "0 4 * * *"
   workflow_dispatch:
     inputs:
       debugging:
