@@ -37,7 +37,7 @@ jobs:
       - name: Check if tag exists
         id: check_tag
         run: |
-          release_tag="${{ steps.vars.outputs.release_tag }}"
+          export release_tag="${{ steps.vars.outputs.release_tag }}"
           echo "Checking for tag '${release_tag}' via GitHub API..."
 
           tags_json=$(gh api repos/${{ github.repository }}/releases --jq '.[].tag_name')
