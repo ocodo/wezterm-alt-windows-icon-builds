@@ -2,7 +2,10 @@
 # icon-preview-md.rb - Generates markdown preview section for a single icon
 
 if ARGV.empty?
-  puts "Usage: #{File.basename(__FILE__)} path/to/icon.png"
+  puts <<~USAGE
+    Usage: #{File.basename(__FILE__)} wezterm-icon-{name}.png
+  USAGE
+
   exit 1
 end
 
@@ -20,11 +23,12 @@ end
 
 # Generate the markdown section
 markdown = <<~MD
-  ### #{creator}-#{icon_name}
-
-  **Creator:** [@#{creator.downcase}](https://github.com/#{creator.downcase})
+  ### #{icon_name} by #{creator}
 
   <img width="256" alt="#{creator}-#{icon_name} Icon" src="#{icon_path}" />
+
+  **credit:** [@#{creator.downcase}](https://github.com/#{creator.downcase})
+
 MD
 
 puts markdown
