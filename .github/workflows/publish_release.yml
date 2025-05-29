@@ -122,7 +122,7 @@ jobs:
             |
           while IFS=$'\t' read -r name url; do
             echo "📦 Downloading $name.zip"
-            gh api -H "Accept: application/octet-stream" "$url" --output "artifacts/$name.zip"
+            gh api "$url" > "artifacts/$name.zip"
           done
 
       - name: Upload artifacts to release
