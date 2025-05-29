@@ -37,12 +37,18 @@ jobs:
       - name: Check if tag exists
         id: check_tag
         run: |
-          echo "Checking if tag '${{ steps.vars.outputs.release_tag }}' exists..."
-          if git fetch --tags && git rev-parse "refs/tags/${{ steps.vars.outputs.release_tag }}" >/dev/null 2>&1; then
-            echo "🤷 Tag exists, skipping release"
+          release_tag="${{ steps.vars.outputs.release_tag }}"
+          echo "Checking for tag '${release_tag}' via GitHub API..."
+
+          tags_json=$(gh api repos/${{ github.repository }}/releases --jq '.[].tag_name')
+          echo "Existing release tags:"
+          echo "$tags_json"
+
+          if echo "$tags_json" | grep -qx "$release_tag"; then
+            echo "🤷 Tag exists in releases, skipping release"
             echo "exists=true" >> $GITHUB_OUTPUT
           else
-            echo "Tag does not exist"
+            echo "Tag does not exist in releases"
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
 
