@@ -48,11 +48,14 @@ jobs:
       - name: Check if release tag exists
         id: check_tag
         run: |
-          if gh release view "${{ steps.vars.outputs.release_tag }}" > /dev/null 2>&1; then
-            echo "🤷 Tag exists, skipping release"
-            echo "exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
+          echo "Checking ${{ steps.vars.outputs.release_tag }}"
+          if [[ "" != "${{ steps.vars.outputs.release_tag }}" ]]; then
+            if gh release view "${{ steps.vars.outputs.release_tag }}" > /dev/null 2>&1; then
+              echo "🤷 Tag exists, skipping release"
+              echo "exists=true" >> $GITHUB_OUTPUT
+            else
+              echo "exists=false" >> $GITHUB_OUTPUT
+            fi
           fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

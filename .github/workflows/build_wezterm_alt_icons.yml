@@ -32,11 +32,13 @@ jobs:
       - name: Check if release tag exists
         id: check_tag
         run: |
-          if gh release view "${{ steps.get-wezterm-latest.outputs.version }}" > /dev/null 2>&1; then
-            echo "⚠️  Tag exists, skipping release"
-            echo "exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
+          if [[ "" != "${{ steps.get-wezterm-latest.outputs.version }}" ]]; then
+            if gh release view "${{ steps.get-wezterm-latest.outputs.version }}" > /dev/null 2>&1; then
+              echo "⚠️  Tag exists, skipping release"
+              echo "exists=true" >> $GITHUB_OUTPUT
+            else
+              echo "exists=false" >> $GITHUB_OUTPUT
+            fi
           fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
