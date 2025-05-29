@@ -19,6 +19,8 @@ jobs:
         run: echo "CONCLUSION=${{ github.event.workflow_run.conclusion }}" >> $GITHUB_ENV
 
       - name: Exit - upstream failed
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "👉  Upstream conclusion: ${CONCLUSION-Unknown}"
           if [ "$CONCLUSION" != "success" ]; then
@@ -29,16 +31,14 @@ jobs:
           else
             echo "🚀  Upstream ok..."
           fi
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Get latest wezterm tag
         id: wezterm_tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           tag=$(gh api repos/wezterm/wezterm/releases/latest --jq .tag_name)
           echo "tag=$tag" >> $GITHUB_OUTPUT
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set release tag variable
         id: vars
@@ -47,6 +47,8 @@ jobs:
 
       - name: Check if release tag exists
         id: check_tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           export release_tag="${{ steps.vars.outputs.release_tag }}"
           echo "Checking for tag '${release_tag}' via GitHub API..."
@@ -62,8 +64,6 @@ jobs:
             echo "Tag does not exist in releases"
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Release Exists
         if: ${{ steps.check_tag.outputs.exists == 'true' }}

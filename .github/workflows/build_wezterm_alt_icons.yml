@@ -36,6 +36,8 @@ jobs:
 
       - name: Check if tag exists
         id: check_tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           export release_tag="${{ steps.vars.outputs.release_tag }}"
           echo "Checking for tag '${release_tag}' via GitHub API..."
@@ -54,12 +56,12 @@ jobs:
 
       - name: Cancel if tag exists
         if: ${{ steps.check_tag.outputs.exists }} == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}        
         run: |
           echo "echo "⚠️  Release tag exists, cancelling current workflow run to avoid duplicate release" Release tag exists, cancelling current workflow run to avoid duplicate release"
           gh api -X POST repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/cancel \
             -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Get WezTerm Windows Zip
         id: get-wezterm-zip
