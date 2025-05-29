@@ -1,17 +1,94 @@
-name: Publish Release
+name: Create Release from Windows Artifacts
 
 on:
   workflow_run:
-    workflows:
-      - "WezTerm Windows Alt Icon Builds"
-    types:
-      - completed
+    workflows: ["WezTerm Windows Alt Icon Builds"]
+    types: [completed]
 
 jobs:
-  on-success:
+  release:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
-      - run: |
-          echo "Workflow Success:"
-          echo "${{ toJson(github.event.workflow_run) }}"
+      - uses: actions/checkout@v4
+
+      - run: gh auth status
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get latest wezterm tag
+        id: wezterm_tag
+        run: |
+          tag=$(gh api repos/wezterm/wezterm/releases/latest --jq .tag_name)
+          echo "tag=$tag" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set release tag variable
+        id: vars
+        run: |
+          echo "release_tag=${{ steps.wezterm_tag.outputs.tag }}-alt-icons" >> $GITHUB_OUTPUT
+
+      - name: Check if release tag exists
+        id: check_tag
+        run: |
+          if gh release view "${{ steps.vars.outputs.release_tag }}" > /dev/null 2>&1; then
+            echo "Tag exists, skipping release"
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Stop if tag exists
+        if: steps.check_tag.outputs.exists == 'true'
+        run: echo "Release tag exists, exiting job early"
+
+      - name: Append to shipped.log.md
+        if: steps.check_tag.outputs.exists == 'false'
+        run: |
+          export datetime=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          echo "- shipped: $datetime - ${{ steps.vars.outputs.release_tag }}" >> shipped.log.md
+          git config user.name "alt-icons-actions"
+          git config user.email "alt-icons@the.void"
+          git add shipped.log.md
+          git commit -m "Shipped WezTerm Windows ${{ steps.vars.outputs.release_tag }} ${datetime}"
+
+      - name: Create git tag on latest commit
+        if: steps.check_tag.outputs.exists == 'false'
+        run: |
+          git tag "${{ steps.vars.outputs.release_tag }}"
+          git push origin "${{ steps.vars.outputs.release_tag }}"
+
+      - name: Create release
+        if: steps.check_tag.outputs.exists == 'false'
+        run: |
+          gh release \
+            | create "${{ steps.vars.outputs.release_tag }}" \
+            | --title "${{ steps.vars.outputs.release_tag }}" \
+            | --notes "Windows Alt-icons for WezTerm release: ${{ steps.wezterm_tag.outputs.tag }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download artifacts as zip files
+        if: steps.check_tag.outputs.exists == 'false'
+        run: |
+          mkdir artifacts
+          gh api \
+            repos/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}/artifacts \
+            --jq '.artifacts[] | [.name, .archive_download_url] | @tsv' |
+          while IFS=$'\t' read -r name url; do
+            echo "Downloading $name.zip"
+            gh api -H "Accept: application/octet-stream" "$url" --output "artifacts/$name.zip"
+          done
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifacts to release
+        if: steps.check_tag.outputs.exists == 'false'
+        run: |
+          for f in artifacts/*.zip; do
+            gh release upload "${{ steps.vars.outputs.release_tag }}" "$f"
+          done
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
