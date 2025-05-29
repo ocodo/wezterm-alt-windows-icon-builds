@@ -29,19 +29,22 @@ jobs:
           # Output the tag name using the new syntax
           echo "version=$version" >> $GITHUB_OUTPUT
 
-      - name: Check if release tag exists
+      - name: Set release tag variable
+        id: vars
+        run: |
+          echo "release_tag=${{ steps.get-wezterm-latest.outputs.version }}-alt-icons" >> $GITHUB_OUTPUT
+
+      - name: Check if tag exists
         id: check_tag
         run: |
-          if [[ "" != "${{ steps.get-wezterm-latest.outputs.version }}" ]]; then
-            if gh release view "${{ steps.get-wezterm-latest.outputs.version }}" > /dev/null 2>&1; then
-              echo "⚠️  Tag exists, skipping release"
-              echo "exists=true" >> $GITHUB_OUTPUT
-            else
-              echo "exists=false" >> $GITHUB_OUTPUT
-            fi
+          echo "Checking if tag '${{ steps.vars.outputs.release_tag }}' exists..."
+          if git fetch --tags && git rev-parse "refs/tags/${{ steps.vars.outputs.release_tag }}" >/dev/null 2>&1; then
+            echo "🤷 Tag exists, skipping release"
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "Tag does not exist"
+            echo "exists=false" >> $GITHUB_OUTPUT
           fi
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Cancel if tag exists
         if: ${{ steps.check_tag.outputs.exists }} == 'true'
