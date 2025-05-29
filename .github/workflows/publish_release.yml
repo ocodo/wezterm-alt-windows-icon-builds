@@ -103,8 +103,8 @@ jobs:
         run: |
           gh release \
             create "${{ steps.vars.outputs.release_tag }}" \
-              --title "${{ steps.vars.outputs.release_tag }}" \
-              --notes "📦 Windows Alt-icons for WezTerm release: ${{ steps.wezterm_tag.outputs.tag }}"
+              --title "WezTerm-Windows-alt-icons-${{ steps.vars.outputs.release_tag }}" \
+              --notes "📦 WezTerm-Windows alt-icons release: ${{ steps.wezterm_tag.outputs.tag }}"
 
       - name: Download artifacts as zip files
         env:
