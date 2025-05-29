@@ -55,7 +55,7 @@ jobs:
           echo "Existing release tags:"
           echo "$tags_json"
 
-          if echo "$tags_json" | grep -qx "$release_tag"; then
+          if [[ "${tags_json}" == *"${release_tag}"* ]]; then
             echo "🤷 Tag exists in releases, skipping release"
             echo "exists=true" >> $GITHUB_OUTPUT
           else
