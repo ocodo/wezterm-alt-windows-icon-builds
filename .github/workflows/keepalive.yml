@@ -1,0 +1,52 @@
+name: "🔄 Workflow Keepalive (Artisan Edition)"  
+description: "Maintains workflow activation with surgical precision"  
+
+on:  
+  schedule:  
+    - cron: '0 0 1 */2 *'  # Chronomancer scheduling  
+  workflow_dispatch:  
+    inputs:  
+      reason:  
+        description: "Manual trigger reason"  
+        required: false  
+        default: "Maintenance"  
+
+jobs:  
+  keepalive:  
+    name: "🔵 Pulse Check"  
+    runs-on: ubuntu-latest  
+    env:  
+      THRESHOLD_DAYS: 45  
+      GIT_IDENTITY: "GitHub Actions Artisan"  
+
+    steps:  
+      - name: "🏷️ Checkout (Full History)"  
+        uses: actions/checkout@v4  
+        with:  
+          fetch-depth: 0  # For time-travel capabilities  
+
+      - name: "⏳ Calculate Inactivity"  
+        id: timekeeper  
+        run: |  
+          LAST_COMMIT_EPOCH=$(git log -1 --format=%ct)  
+          CURRENT_EPOCH=$(date +%s)  
+          INACTIVE_DAYS=$(( (CURRENT_EPOCH - LAST_COMMIT_EPOCH) / 86400 ))  
+          echo "inactive_days=$INACTIVE_DAYS" >> $GITHUB_OUTPUT  
+          echo "last_commit_date=$(date -d @$LAST_COMMIT_EPOCH '+%Y-%m-%d')" >> $GITHUB_OUTPUT  
+
+      - name: "⚡ Conditional Keepalive"  
+        if: ${{ steps.timekeeper.outputs.inactive_days > env.THRESHOLD_DAYS }}  
+        run: |  
+          git config user.name "$GIT_IDENTITY"  
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"  
+          git commit --allow-empty \  
+            -m "🔄 Keepalive (inactive ${steps.timekeeper.outputs.inactive_days}d) [skip ci]" \  
+            -m "Triggered: ${{ github.event_name == 'workflow_dispatch' && inputs.reason || 'Scheduled' }}\nRepo age: ${steps.timekeeper.outputs.last_commit_date}"  
+          git push  
+
+      - name: "✅ Status Report"  
+        run: |  
+          echo "=== Keepalive Report ==="  
+          echo "Last commit: ${{ steps.timekeeper.outputs.last_commit_date }}"  
+          echo "Inactive days: ${{ steps.timekeeper.outputs.inactive_days }}/$THRESHOLD_DAYS"  
+          echo "Action taken: ${{ steps.timekeeper.outputs.inactive_days > env.THRESHOLD_DAYS && 'Commit pushed' || 'No action needed' }}"  
