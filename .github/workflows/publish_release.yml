@@ -83,6 +83,39 @@ jobs:
             echo "💤 Sleeping for 5 seconds to let the cancel take effect..."
             sleep 5
 
+      - name: Generate release notes
+        run: |
+          export WEZTERM_RELEASE="${{ steps.wezterm_tag.outputs.tag }}"
+
+          cat <<EOF > RELEASE.md
+          # 📦 WezTerm-Windows alt-icons release: $WEZTERM_RELEASE
+
+          Another WezTerm Windows build is ready for download, complete with the latest fixes and a fresh set of custom icons!
+
+          Each of the zip files below are the **full Windows portable zip package** from [wezterm/wezterm](https://github.com/wezterm/wezterm/releases/latets), patched with one of the custom icons shown.
+
+          The zip file contains everything you need to run WezTerm on Windows, with your chosen icon now included as part of the package. You can pick your favorite icon and get a fully updated WezTerm setup with just one download.
+
+          You can drop the contents on top of an existing setup or portable install on your Windows machine, to get the icons to update run the following in the Terminal as Admin:
+
+          ```pwsh
+          Stop-Process -Name explorer -Force
+          Remove-Item "$env:LOCALAPPDATA\Microsoft\Windows\Explorer\iconcache*" -Force
+          Remove-Item "$env:APPDATA\Microsoft\Windows\Explorer\iconcache*" -Force
+          Start-Process explorer
+          ```
+
+          It'll clear the icon cache and restart explorer.exe, Windows _shouldn't_ need restarting 🤞
+
+          $(< icon-table.md)
+
+          If you've got a WezTerm icon idea of your own, we'd love [for you to contribute!](https://github.com/ocodo/wezterm-alt-windows-icon-builds/)
+
+          Big thanks to the talented icon creators who've shared their designs - your work made this project possible.
+
+          Of course a huge thank you to @wez for making WezTerm and being an all around awesome dude. 💖
+          EOF
+
       - name: Append to shipped.log.md
         run: |
           export datetime=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
@@ -104,7 +137,7 @@ jobs:
           gh release \
             create "${{ steps.vars.outputs.release_tag }}" \
               --title "WezTerm-Windows-${{ steps.vars.outputs.release_tag }}" \
-              --notes "📦 WezTerm-Windows alt-icons release: ${{ steps.wezterm_tag.outputs.tag }}"
+              -F RELEASE.md
 
       - name: Download artifacts as zip files
         env:
