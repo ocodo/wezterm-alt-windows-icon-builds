@@ -60,7 +60,7 @@ jobs:
           fi
 
       - name: Cancel if tag exists
-        if: ${{ steps.check_tag.outputs.exists }} == 'true'
+        if: ${{ steps.check_tag.outputs.exists == 'true' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
