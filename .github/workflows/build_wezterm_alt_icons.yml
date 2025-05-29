@@ -1,6 +1,9 @@
 name: WezTerm Windows Alt Icon Builds
 
 on:
+  schedule:
+    - cron: "0 4 * * *"
+
   workflow_dispatch:
     inputs:
       debugging:
@@ -25,6 +28,27 @@ jobs:
 
           # Output the tag name using the new syntax
           echo "version=$version" >> $GITHUB_OUTPUT
+
+      - name: Check if release tag exists
+        id: check_tag
+        run: |
+          if gh release view "${{ steps.get-wezterm-latest.outputs.version }}" > /dev/null 2>&1; then
+            echo "⚠️  Tag exists, skipping release"
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cancel if tag exists
+        if: ${{ steps.check_tag.outputs.exists }} == 'true'
+        run: |
+          echo "echo "⚠️  Release tag exists, cancelling current workflow run to avoid duplicate release" Release tag exists, cancelling current workflow run to avoid duplicate release"
+          gh api -X POST repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/cancel \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Get WezTerm Windows Zip
         id: get-wezterm-zip
