@@ -32,7 +32,7 @@ jobs:
         id: check_tag
         run: |
           if gh release view "${{ steps.vars.outputs.release_tag }}" > /dev/null 2>&1; then
-            echo "Tag exists, skipping release"
+            echo "🤷 Tag exists, skipping release"
             echo "exists=true" >> $GITHUB_OUTPUT
           else
             echo "exists=false" >> $GITHUB_OUTPUT
@@ -66,7 +66,7 @@ jobs:
           gh release \
             | create "${{ steps.vars.outputs.release_tag }}" \
             | --title "${{ steps.vars.outputs.release_tag }}" \
-            | --notes "Windows Alt-icons for WezTerm release: ${{ steps.wezterm_tag.outputs.tag }}"
+            | --notes "📦 Windows Alt-icons for WezTerm release: ${{ steps.wezterm_tag.outputs.tag }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -84,7 +84,7 @@ jobs:
             | @tsv' \
             |
           while IFS=$'\t' read -r name url; do
-            echo "Downloading $name.zip"
+            echo "📦 Downloading $name.zip"
             gh api -H "Accept: application/octet-stream" "$url" --output "artifacts/$name.zip"
           done
         env:
