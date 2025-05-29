@@ -15,6 +15,24 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Get upstream conclusion
+        run: echo "CONCLUSION=${{ github.event.workflow_run.conclusion }}" >> $GITHUB_ENV
+
+      - name: Exit - upstream failed
+        run: |
+          echo "Upstream conclusion: $CONCLUSION"
+          if [ "$CONCLUSION" != "success" ]; then
+            echo "🤷 Upstream did not succeed. Cancelling this run..."
+            gh api -X POST /repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/cancel
+            echo "💤 Sleeping for 5 seconds to let the cancel take effect..."
+            sleep 5
+          else
+            echo "Upstream succeeded. Continuing..."
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
       - name: Get latest wezterm tag
         id: wezterm_tag
         run: |
