@@ -7,20 +7,14 @@ on:
 
 jobs:
   release:
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      CONCLUSION: ${{ github.event.workflow_run.conclusion }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - run: gh auth status
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Get upstream conclusion
-        run: echo "CONCLUSION=${{ github.event.workflow_run.conclusion }}" >> $GITHUB_ENV
-
       - name: Exit - upstream failed
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "👉  Upstream conclusion: ${CONCLUSION-Unknown}"
           if [ "$CONCLUSION" != "success" ]; then
@@ -34,49 +28,72 @@ jobs:
 
       - name: Get latest wezterm tag
         id: wezterm_tag
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           tag=$(gh api repos/wezterm/wezterm/releases/latest --jq .tag_name)
           echo "tag=$tag" >> $GITHUB_OUTPUT
 
+      - name: Get artifact list
+        id: get-artifact-list
+        run: |
+          artifact_list="$(gh api \
+            repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts \
+            --jq '
+            .artifacts[]
+            | select(.name
+            | test("^WezTerm-windows-.*zip$"))
+            | [.name, .archive_download_url]
+            | @tsv')"
+
+          echo "artifact_list=$artifact_list" >> $GITHUB_ENV
+          echo "artifact_count=$(echo "$artifact_list" | wc -l)" >> $GITHUB_ENV
+
       - name: Set release tag variable
-        id: vars
+        id: set-release-tag
         run: |
           echo "release_tag=${{ steps.wezterm_tag.outputs.tag }}-alt-icons" >> $GITHUB_OUTPUT
 
       - name: Check if release tag exists
         id: check_tag
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          export release_tag="${{ steps.vars.outputs.release_tag }}"
+          export release_tag="${{ steps.set-release-tag.outputs.release_tag }}"
           echo "Checking for tag '${release_tag}' via GitHub API..."
-
           tags_json=$(gh api repos/${{ github.repository }}/releases --jq '.[].tag_name')
 
           # If no tags exist, just skip the check
           if [ -z "$tags_json" ]; then
             echo "No tags found, skipping release check."
             echo "exists=false" >> $GITHUB_OUTPUT
-            exit 0  # Exit early if no tags are found
+            exit 0  # Exit OK early if no tags are found
           fi
 
           echo "Existing release tags:"
           echo "$tags_json"
 
           if [[ "${tags_json}" == *"${release_tag}"* ]]; then
-            echo "🤷 Tag exists in releases, skipping release"
+            echo "🔎 ${release_tag} exists in releases, comparing assets..."
             echo "exists=true" >> $GITHUB_OUTPUT
           else
             echo "Tag does not exist in releases"
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Release Exists
+      - name: Compare Release Assets
         if: ${{ steps.check_tag.outputs.exists == 'true' }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        id: compare_assets
+        run: |
+          # TODO --
+          echo "identical=true" >> $GITHUB_OUTPUT
+
+
+          # Check current artifact count & hashes with assets.
+          workflow_artifact_count=${{ steps.get-artifact-list.outputs.artifact_count }}
+
+          # Check release asset count
+          releases=$(gh api repos/${{ github.repository }}/releases --jq '.[].tag_name')
+
+
+      - name: Identical Release Exists
+        if: ${{ steps.check_tag.outputs.exists == 'true' && steps.compare_assets.outputs.identical == 'true' }}
         run: |
             echo "🤷 Release exits cancelling this run..."
             gh api -X POST /repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/cancel
@@ -84,74 +101,36 @@ jobs:
             sleep 5
 
       - name: Generate release notes
+        env:
+          WEZTERM_RELEASE: ${{ steps.wezterm_tag.outputs.tag }}
         run: |
-          export WEZTERM_RELEASE="${{ steps.wezterm_tag.outputs.tag }}"
-
-          cat <<EOF > RELEASE.md
-          # 📦 WezTerm-Windows alt-icons release: $WEZTERM_RELEASE
-
-          Another WezTerm Windows build is ready for download, complete with the latest fixes and a fresh set of custom icons!
-
-          Each of the zip files below are the **full Windows portable zip package** from [wezterm/wezterm](https://github.com/wezterm/wezterm/releases/latets), patched with one of the custom icons shown.
-
-          The zip file contains everything you need to run WezTerm on Windows, with your chosen icon now included as part of the package. You can pick your favorite icon and get a fully updated WezTerm setup with just one download.
-
-          You can drop the contents on top of an existing setup or portable install on your Windows machine, to get the icons to update run the following in the Terminal as Admin:
-
-          ```pwsh
-          Stop-Process -Name explorer -Force
-          Remove-Item "$env:LOCALAPPDATA\Microsoft\Windows\Explorer\iconcache*" -Force
-          Remove-Item "$env:APPDATA\Microsoft\Windows\Explorer\iconcache*" -Force
-          Start-Process explorer
-          ```
-
-          It'll clear the icon cache and restart explorer.exe, Windows _shouldn't_ need restarting 🤞
-
-          $(< icon-table.md)
-
-          If you've got a WezTerm icon idea of your own, we'd love [for you to contribute!](https://github.com/ocodo/wezterm-alt-windows-icon-builds/)
-
-          Big thanks to the talented icon creators who've shared their designs - your work made this project possible.
-
-          Of course a huge thank you to @wez for making WezTerm and being an all around awesome dude. 💖
-          EOF
+          python3 scripts/py/generate_release_notes.py
 
       - name: Append to shipped.log.md
         run: |
           export datetime=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          echo "- shipped: $datetime - ${{ steps.vars.outputs.release_tag }}" >> shipped.log.md
+          echo "- shipped: $datetime - ${{ steps.set-release-tag.outputs.release_tag }}" >> SHIPPED.log.md
           git config user.name "alt-icons-actions"
-          git config user.email "alt-icons@the.void"
-          git add shipped.log.md
-          git commit -m "Shipped WezTerm Windows ${{ steps.vars.outputs.release_tag }} ${datetime}"
+          git config user.email "alt-icons@into.the.void"
+          git add SHIPPED.log.md
+          git commit -m "Shipped WezTerm Windows ${{ steps.set-release-tag.outputs.release_tag }} ${datetime}"
 
       - name: Create git tag on latest commit
         run: |
-          git tag "${{ steps.vars.outputs.release_tag }}"
-          git push origin "${{ steps.vars.outputs.release_tag }}"
+          git tag "${{ steps.set-release-tag.outputs.release_tag }}"
+          git push origin "${{ steps.set-release-tag.outputs.release_tag }}"
 
       - name: Create release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release \
-            create "${{ steps.vars.outputs.release_tag }}" \
-              --title "WezTerm-Windows-${{ steps.vars.outputs.release_tag }}" \
+            create "${{ steps.set-release-tag.outputs.release_tag }}" \
+              --title "WezTerm-Windows-${{ steps.set-release-tag.outputs.release_tag }}" \
               -F RELEASE.md
 
       - name: Download artifacts as zip files
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mkdir artifacts
-          gh api \
-            repos/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}/artifacts \
-            --jq '
-            .artifacts[]
-            | select(.name
-            | test("^WezTerm-windows-.*zip$"))
-            | [.name, .archive_download_url]
-            | @tsv' \
+          echo "${{ steps.get-artifact-list.outputs.artifact-list }}"
             |
           while IFS=$'\t' read -r name url; do
             echo "📦 Downloading $name.zip"
@@ -163,5 +142,5 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           for f in artifacts/*.zip; do
-            gh release upload "${{ steps.vars.outputs.release_tag }}" "$f"
+            gh release upload "${{ steps.set-release-tag.outputs.release_tag }}" "$f"
           done

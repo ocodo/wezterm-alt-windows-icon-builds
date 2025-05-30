@@ -1,9 +1,5 @@
 #!/bin/bash
 
- # you can install: imagemagock and run
- # convert "your icon name.png" -trim -background none -gravity center "unpadded.png"
- # but we'll run this when we add new icons anyway.
-
 for file in alt-icons/*png; do
   convert "$file" -trim -background none -gravity center "$file"
   echo "📐 unpadded: $file"

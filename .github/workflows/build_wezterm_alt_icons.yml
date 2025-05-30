@@ -33,43 +33,6 @@ jobs:
         run: |
           echo "release_tag=${{ steps.get-wezterm-latest.outputs.version }}-alt-icons" >> $GITHUB_OUTPUT
 
-      - name: Check if tag exists
-        id: check_tag
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          export release_tag="${{ steps.vars.outputs.release_tag }}"
-          echo "Checking for tag '${release_tag}' via GitHub API..."
-
-          tags_json=$(gh api repos/${{ github.repository }}/releases --jq '.[].tag_name')
-
-          # If no tags exist, just skip the check
-          if [ -z "$tags_json" ]; then
-            echo "No tags found, skipping release check."
-            echo "exists=false" >> $GITHUB_OUTPUT
-            exit 0  # Exit early if no tags are found
-          fi
-
-          echo "Existing release tags:"
-          echo "$tags_json"
-          echo "---8<---"
-          if [[ "${tags_json}" == *"${release_tag}"* ]]; then
-            echo "$?"
-            echo "🤷 Tag exists in releases, skipping release"
-            echo "exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Cancel if tag exists
-        if: ${{ steps.check_tag.outputs.exists == 'true' }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo "echo "⚠️  Release tag exists, cancelling current workflow run to avoid duplicate release" Release tag exists, cancelling current workflow run to avoid duplicate release"
-          gh api -X POST repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/cancel \
-            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}"
-
       - name: Get WezTerm Windows Zip
         id: get-wezterm-zip
         run: |
@@ -110,21 +73,7 @@ jobs:
 
       - name: Generate Icon Matrix
         id: set-matrix
-        shell: ruby {0}
-        run: |
-          require 'json'
-
-          matrix = Dir.glob('alt-icons/wezterm-icon-*.png').map do |file|
-            {
-              file: file,
-              ico: file.sub(/\.png$/, '.ico'),
-              name: File.basename(file).sub(/^wezterm-icon-/, '').sub(/\.png$/, '')
-            }
-          end
-
-          File.open(ENV['GITHUB_OUTPUT'], 'a') do |f|
-            f.puts "matrix=#{matrix.to_json}"
-          end
+        run: ruby scripts/rb/generate_icon_matrix.rb
 
       - id: upload-alt-icons
         uses: actions/upload-artifact@v4
