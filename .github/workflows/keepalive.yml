@@ -1,5 +1,4 @@
 name: "Workflow Keepalive"
-description: "Maintains workflow activation"
 
 on:
   schedule:

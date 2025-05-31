@@ -73,7 +73,7 @@ jobs:
 
       - name: Generate Icon Matrix
         id: set-matrix
-        run: ruby scripts/rb/generate_icon_matrix.rb
+        run: python3 scripts/generate_icon_matrix.py
 
       - id: upload-alt-icons
         uses: actions/upload-artifact@v4
