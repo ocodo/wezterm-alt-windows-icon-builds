@@ -70,11 +70,8 @@ jobs:
           # Fetch release assets matching the glob pattern and then use it for comparison.
           gh api repos/${{ github.repository }}/releases/tags/${release_tag} \
             --jq '.assets[] | select(.name | test("^WezTerm-Windows-.*zip$")) | .name' > assets.list
-          if [[ $? != 0 ]]; then
-            echo "" > assets.list
-          fi
 
-          gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts \
+          gh api repos/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}/artifacts \
             --jq '.artifacts[] | select(.name | test("^WezTerm-Windows-.*zip$")) | .name' > artifacts.list
 
           echo "Assets List (${release_tag})"
@@ -95,7 +92,7 @@ jobs:
         if: ${{ steps.check_tag.outputs.exists == 'true' && steps.compare_assets.outputs.identical == 'true' }}
         run: |
           echo "🤷 The release exists and assets are identical. Cancelling this run..."
-          gh api -X POST /repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/cancel
+          gh api -X POST /repos/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}/cancel
           echo "💤 Sleeping for 5 seconds to let the cancel take effect..."
           sleep 5
 
@@ -136,7 +133,7 @@ jobs:
       - name: Download artifacts as zip files
         run: |
           mkdir artifacts
-          gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts \
+          gh api repos/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}/artifacts \
           | \
           while IFS=$'\t' read -r name url; do
             echo "📦 Downloading $name.zip"
