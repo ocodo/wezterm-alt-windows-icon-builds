@@ -77,6 +77,11 @@ jobs:
           gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts \
             --jq '.artifacts[] | select(.name | test("^WezTerm-Windows-.*zip$")) | .name' > artifacts.list
 
+          echo "Assets List (${release_tag})"
+          cat assets.list
+
+          echo "Artifacts List (${release_tag})"
+          cat artifacts.list
 
           # Convert workspace and compare artifacts
           if [ "$(wc -l < artifacts.list)" -eq "$(wc -l < assets.list)" ]; then
