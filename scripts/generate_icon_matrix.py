@@ -1,17 +1,22 @@
-require 'json'
+import os
+import glob
+import json
 
-def get_name(file)
-  File.basename(file).sub(/^wezterm-icon-/, '').sub(/\.png$/, '')
-end
+def get_name(file):
+    base = os.path.basename(file)
+    return base.removeprefix("wezterm-icon-").removesuffix(".png")
 
-matrix = Dir.glob('alt-icons/wezterm-icon-*.png').map do |file|
-  {
-    file: file,
-    ico: file.sub(/\.png$/, '.ico'),
-    name: get_name(file)
-  }
-end
 
-File.open(ENV['GITHUB_OUTPUT'], 'a') do |f|
-  f.puts "matrix=#{matrix.to_json}"
-end
+matrix = []
+
+for file in glob.glob("alt-icons/wezterm-icon-*.png"):
+    matrix.append({
+        "file": file,
+        "ico": file[:-4] + ".ico",  # Replace .png with .ico
+        "name": get_name(file)
+    })
+
+github_output = os.environ.get("GITHUB_OUTPUT")
+if github_output:
+    with open(github_output, "a") as f:
+        f.write(f"matrix={json.dumps(matrix)}\n")
