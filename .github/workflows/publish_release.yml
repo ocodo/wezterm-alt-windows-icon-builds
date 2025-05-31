@@ -86,15 +86,7 @@ jobs:
             echo "⚠️ there are new artifacts - updating release";
           fi
 
-
           echo "identical=true" >> $GITHUB_OUTPUT
-            | while read -r artifact_name; do
-                grep -q "^${artifact_name}$" assets.list || {
-                  echo "It will be added to the existing release"
-                  echo "identical=false" >> $GITHUB_OUTPUT
-                  break
-                }
-              done
 
       - name: Identical Release Exists
         if: ${{ steps.check_tag.outputs.exists == 'true' && steps.compare_assets.outputs.identical == 'true' }}
