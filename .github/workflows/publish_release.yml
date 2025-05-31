@@ -86,8 +86,6 @@ jobs:
             echo "⚠️ there are new artifacts - updating release";
           fi
 
-          echo "identical=true" >> $GITHUB_OUTPUT
-
       - name: Identical Release Exists
         if: ${{ steps.check_tag.outputs.exists == 'true' && steps.compare_assets.outputs.identical == 'true' }}
         run: |
