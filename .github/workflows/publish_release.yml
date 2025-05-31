@@ -84,22 +84,19 @@ jobs:
           gh api repos/${{ github.repository }}/releases/tags/${release_tag} \
             --jq '.assets[] | select(.name | test("^WezTerm-Windows-.*zip$")) | .name' > assets.list
 
+          echo "assets_list=$(< assets.list)" >> $GITHUB_OUTPUT
+
           # Convert workspace and compare artifacts
-          export identical="true"
+          echo "identical=true" >> $GITHUB_OUTPUT
           echo "${{ steps.get_artifact_list.outputs.artifact_list }}" \
             | while read -r artifact_name; do
                 grep -q "^${artifact_name}$" assets.list || {
                   echo "⚠️ ${artifact_name} is new or different!";
                   echo "It will be added to the existing release"
-                  export identical="false"
+                  echo "identical=false" >> $GITHUB_OUTPUT
                   break
                 }
               done
-
-          # If all the artifacts are identical we skip the run, otherwise we
-          # upload the artifacts to the release assets, to add the new ones.
-          echo "assets_list=$(< assets.list)" >> $GITHUB_OUTPUT
-          echo "identical=$identical" >> $GITHUB_OUTPUT
 
       - name: Identical Release Exists
         if: ${{ steps.check_tag.outputs.exists == 'true' && steps.compare_assets.outputs.identical == 'true' }}
