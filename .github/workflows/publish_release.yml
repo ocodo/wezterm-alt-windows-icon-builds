@@ -137,6 +137,11 @@ jobs:
             gh api "$url" > "artifacts/$name.zip"
           done
 
+      - name: Update Relase Notes
+        if: ${{ steps.check_tag.outputs.exists == 'true' }}
+        run: |
+          gh release edit ${release_tag} -F RELEASE.md
+
       - name: Upload artifacts to release
         run: |
           for artifact in artifacts/*.zip; do
