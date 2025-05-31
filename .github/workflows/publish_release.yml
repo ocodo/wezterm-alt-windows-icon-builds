@@ -98,8 +98,8 @@ jobs:
 
           # If all the artifacts are identical we skip the run, otherwise we
           # upload the artifacts to the release assets, to add the new ones.
-          echo "assets_list=$(< assets.list)" >> $GITHUB_OUTPUTS
-          echo "identical=$identical" >> $GITHUB_OUTPUTS
+          echo "assets_list=$(< assets.list)" >> $GITHUB_OUTPUT
+          echo "identical=$identical" >> $GITHUB_OUTPUT
 
       - name: Identical Release Exists
         if: ${{ steps.check_tag.outputs.exists == 'true' && steps.compare_assets.outputs.identical == 'true' }}
