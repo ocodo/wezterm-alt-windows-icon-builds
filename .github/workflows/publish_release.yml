@@ -1,5 +1,8 @@
 name: Create Release from Windows Artifacts
 
+env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 on:
   workflow_run:
     workflows: ["WezTerm Windows Alt Icon Builds"]
@@ -8,10 +11,10 @@ on:
 jobs:
   release:
     env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       CONCLUSION: ${{ github.event.workflow_run.conclusion }}
     runs-on: ubuntu-latest
     steps:
+
       - uses: actions/checkout@v4
 
       - name: Exit - upstream failed
@@ -33,104 +36,117 @@ jobs:
           echo "tag=$tag" >> $GITHUB_OUTPUT
 
       - name: Get artifact list
-        id: get-artifact-list
+        id: get_artifact_list
         run: |
           artifact_list="$(gh api \
             repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts \
             --jq '
             .artifacts[]
-            | select(.name
-            | test("^WezTerm-windows-.*zip$"))
+            | select(.name | test("^WezTerm-Windows-.*zip$"))
             | [.name, .archive_download_url]
             | @tsv')"
 
-          echo "artifact_list=$artifact_list" >> $GITHUB_ENV
-          echo "artifact_count=$(echo "$artifact_list" | wc -l)" >> $GITHUB_ENV
+          echo "artifact_list=$artifact_list" >> $GITHUB_OUTPUT
 
       - name: Set release tag variable
-        id: set-release-tag
+        id: set_release_tag
         run: |
           echo "release_tag=${{ steps.wezterm_tag.outputs.tag }}-alt-icons" >> $GITHUB_OUTPUT
+          echo "release_tag=${{ steps.wezterm_tag.outputs.tag }}-alt-icons" >> $GITHUB_ENV
 
       - name: Check if release tag exists
         id: check_tag
         run: |
-          export release_tag="${{ steps.set-release-tag.outputs.release_tag }}"
           echo "Checking for tag '${release_tag}' via GitHub API..."
           tags_json=$(gh api repos/${{ github.repository }}/releases --jq '.[].tag_name')
 
-          # If no tags exist, just skip the check
           if [ -z "$tags_json" ]; then
             echo "No tags found, skipping release check."
             echo "exists=false" >> $GITHUB_OUTPUT
-            exit 0  # Exit OK early if no tags are found
-          fi
-
-          echo "Existing release tags:"
-          echo "$tags_json"
-
-          if [[ "${tags_json}" == *"${release_tag}"* ]]; then
-            echo "🔎 ${release_tag} exists in releases, comparing assets..."
-            echo "exists=true" >> $GITHUB_OUTPUT
           else
-            echo "Tag does not exist in releases"
-            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "Existing release tags:"
+            echo "$tags_json"
+
+            if [[ "${tags_json}" == *"${release_tag}"* ]]; then
+              echo "🔎 ${release_tag} exists in releases, comparing assets..."
+              echo "exists=true" >> $GITHUB_OUTPUT
+            else
+              echo "Tag does not exist in releases"
+              echo "exists=false" >> $GITHUB_OUTPUT
+            fi
           fi
 
-      - name: Compare Release Assets
+      - name: Check Existing Release Assets
         if: ${{ steps.check_tag.outputs.exists == 'true' }}
         id: compare_assets
         run: |
-          # TODO --
-          echo "identical=true" >> $GITHUB_OUTPUT
+          # Fetch release assets matching the glob pattern and then use it for comparison.
+          gh api repos/${{ github.repository }}/releases/tags/${release_tag} \
+            --jq '.assets[] | select(.name | test("^WezTerm-Windows-.*zip$")) | .name' > assets.list
 
+          # Convert workspace and compare artifacts
+          export identical="true"
+          echo "${{ steps.get_artifact_list.outputs.artifact_list }}" \
+            | while read -r artifact_name; do
+                grep -q "^${artifact_name}$" assets.list || {
+                  echo "⚠️ ${artifact_name} is new or different!";
+                  echo "It will be added to the existing release"
+                  export identical="false"
+                  contine
+                }
+              done
 
-          # Check current artifact count & hashes with assets.
-          workflow_artifact_count=${{ steps.get-artifact-list.outputs.artifact_count }}
-
-          # Check release asset count
-          releases=$(gh api repos/${{ github.repository }}/releases --jq '.[].tag_name')
-
+          # If all the artifacts are identical we skip the run, otherwise we
+          # upload the artifacts to the release assets, to add the new ones.
+          echo "assets_list=$(< assets.list)" >> $GITHUB_OUTPUTS
+          echo "identical=$identical" >> $GITHUB_OUTPUTS
 
       - name: Identical Release Exists
         if: ${{ steps.check_tag.outputs.exists == 'true' && steps.compare_assets.outputs.identical == 'true' }}
         run: |
-            echo "🤷 Release exits cancelling this run..."
-            gh api -X POST /repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/cancel
-            echo "💤 Sleeping for 5 seconds to let the cancel take effect..."
-            sleep 5
+          echo "🤷 The release exists and assets are identical. Cancelling this run..."
+          gh api -X POST /repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/cancel
+          echo "💤 Sleeping for 5 seconds to let the cancel take effect..."
+          sleep 5
 
       - name: Generate release notes
         env:
           WEZTERM_RELEASE: ${{ steps.wezterm_tag.outputs.tag }}
         run: |
-          python3 scripts/py/generate_release_notes.py
+          python3 scripts/generate_release_notes.py > RELEASE.md
 
       - name: Append to shipped.log.md
         run: |
+          if [ "${{ steps.check_tag.outputs.exists }}" == "true" ]; then
+            export updating="[updating]"
+          else
+            export updating=""
+          fi
           export datetime=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          echo "- shipped: $datetime - ${{ steps.set-release-tag.outputs.release_tag }}" >> SHIPPED.log.md
+          echo "- shipped: $datetime - $release_tag $updating" >> SHIPPED.log.md
           git config user.name "alt-icons-actions"
           git config user.email "alt-icons@into.the.void"
           git add SHIPPED.log.md
-          git commit -m "Shipped WezTerm Windows ${{ steps.set-release-tag.outputs.release_tag }} ${datetime}"
+          git commit -m "Shipped WezTerm Windows $release_tag ${datetime}"
 
       - name: Create git tag on latest commit
+        if: ${{ steps.check_tag.outputs.exists != 'true' }}
         run: |
-          git tag "${{ steps.set-release-tag.outputs.release_tag }}"
-          git push origin "${{ steps.set-release-tag.outputs.release_tag }}"
+          git tag "$release_tag"
+          git push origin "$release_tag"
 
       - name: Create release
+        if: ${{ steps.check_tag.outputs.exists != 'true' }}
         run: |
           gh release \
-            create "${{ steps.set-release-tag.outputs.release_tag }}" \
-              --title "WezTerm-Windows-${{ steps.set-release-tag.outputs.release_tag }}" \
+            create "$release_tag" \
+              --title "WezTerm-Windows-$release_tag" \
               -F RELEASE.md
 
       - name: Download artifacts as zip files
         run: |
           mkdir artifacts
-          echo "${{ steps.get-artifact-list.outputs.artifact-list }}"
+          echo "${{ steps.get_artifact_list.outputs.artifact_list }}"
             |
           while IFS=$'\t' read -r name url; do
             echo "📦 Downloading $name.zip"
@@ -138,9 +154,13 @@ jobs:
           done
 
       - name: Upload artifacts to release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          for f in artifacts/*.zip; do
-            gh release upload "${{ steps.set-release-tag.outputs.release_tag }}" "$f"
+          for artifact in artifacts/*.zip; do
+            artifact_name=$(basename "$artifact")
+            exists=$(echo "${{ steps.compare_assets.outputs.assets_list }}" | grep -q "^${artifact_name}$"; echo $?)
+            if [ $exists -ne 0 ]; then
+              gh release upload "${{ steps.set_release_tag.outputs.release_tag }}" "$artifact"
+            else
+              echo "Skipping already uploaded: ${artifact}"
+            fi
           done
