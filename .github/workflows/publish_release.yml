@@ -138,12 +138,12 @@ jobs:
       - name: Download artifacts as zip files
         run: |
           mkdir artifacts
-          echo "${{ steps.get_artifact_list.outputs.artifact_list }}"
-            |
-          while IFS=$'\t' read -r name url; do
-            echo "📦 Downloading $name.zip"
-            gh api "$url" > "artifacts/$name.zip"
-          done
+          echo "${{ steps.get_artifact_list.outputs.artifact_list }}" \
+            | \
+            while IFS=$'\t' read -r name url; do
+              echo "📦 Downloading $name.zip"
+              gh api "$url" > "artifacts/$name.zip"
+            done
 
       - name: Upload artifacts to release
         run: |
