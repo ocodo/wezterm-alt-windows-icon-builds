@@ -70,15 +70,26 @@ jobs:
           # Fetch release assets matching the glob pattern and then use it for comparison.
           gh api repos/${{ github.repository }}/releases/tags/${release_tag} \
             --jq '.assets[] | select(.name | test("^WezTerm-Windows-.*zip$")) | .name' > assets.list
+          if [[ $? != 0 ]]; then
+            echo "" > assets.list
+          fi
+
+          gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts \
+            --jq '.artifacts[] | select(.name | test("^WezTerm-Windows-.*zip$")) | .name' > artifacts.list
+
 
           # Convert workspace and compare artifacts
+          if [ "$(wc -l < artifacts.list)" -eq "$(wc -l < assets.list)" ]; then
+            echo "identical=true" >> $GITHUB_OUTPUT
+          else
+            echo "identical=false" >> $GITHUB_OUTPUT
+            echo "⚠️ there are new artifacts - updating release";
+          fi
+
 
           echo "identical=true" >> $GITHUB_OUTPUT
-          gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts \
-            --jq '.artifacts[] | select(.name | test("^WezTerm-Windows-.*zip$")) | .name' \
             | while read -r artifact_name; do
                 grep -q "^${artifact_name}$" assets.list || {
-                  echo "⚠️ ${artifact_name} is new or different!";
                   echo "It will be added to the existing release"
                   echo "identical=false" >> $GITHUB_OUTPUT
                   break
