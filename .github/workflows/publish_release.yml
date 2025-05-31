@@ -92,7 +92,7 @@ jobs:
                   echo "⚠️ ${artifact_name} is new or different!";
                   echo "It will be added to the existing release"
                   export identical="false"
-                  contine
+                  break
                 }
               done
 
