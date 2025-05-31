@@ -35,14 +35,6 @@ jobs:
           tag=$(gh api repos/wezterm/wezterm/releases/latest --jq .tag_name)
           echo "tag=$tag" >> $GITHUB_OUTPUT
 
-      - name: Get artifact list
-        id: get_artifact_list
-        run: |
-          artifact_list="$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts \
-            --jq '.artifacts[] | select(.name | test("^WezTerm-Windows-.*zip$")) | [.name, .archive_download_url] | @tsv')"
-
-          echo "artifact_list=$artifact_list" >> $GITHUB_OUTPUT
-
       - name: Set release tag variable
         id: set_release_tag
         run: |
@@ -79,11 +71,11 @@ jobs:
           gh api repos/${{ github.repository }}/releases/tags/${release_tag} \
             --jq '.assets[] | select(.name | test("^WezTerm-Windows-.*zip$")) | .name' > assets.list
 
-          echo "assets_list=$(< assets.list)" >> $GITHUB_OUTPUT
-
           # Convert workspace and compare artifacts
+
           echo "identical=true" >> $GITHUB_OUTPUT
-          echo "${{ steps.get_artifact_list.outputs.artifact_list }}" \
+          gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts \
+            --jq '.artifacts[] | select(.name | test("^WezTerm-Windows-.*zip$")) | .name' \
             | while read -r artifact_name; do
                 grep -q "^${artifact_name}$" assets.list || {
                   echo "⚠️ ${artifact_name} is new or different!";
@@ -138,12 +130,12 @@ jobs:
       - name: Download artifacts as zip files
         run: |
           mkdir artifacts
-          echo "${{ steps.get_artifact_list.outputs.artifact_list }}" \
-            | \
-            while IFS=$'\t' read -r name url; do
-              echo "📦 Downloading $name.zip"
-              gh api "$url" > "artifacts/$name.zip"
-            done
+          gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts \
+          | \
+          while IFS=$'\t' read -r name url; do
+            echo "📦 Downloading $name.zip"
+            gh api "$url" > "artifacts/$name.zip"
+          done
 
       - name: Upload artifacts to release
         run: |
