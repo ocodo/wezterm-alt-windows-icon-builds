@@ -53,22 +53,26 @@ jobs:
       - name: Set release tag variable
         id: set_release_tag
         run: |
-          export release_tag=${{ steps.wezterm_tag.outputs.tag }}-alt-icons"
+          export release_tag=${{ steps.wezterm_tag.outputs.tag }}-alt-icons
           echo "release_tag=$release_tag >> $GITHUB_ENV
           echo "Internal Release Tag: $release_tag" | tee -a $GITHUB_STEP_SUMMARY
 
       - name: Check if release tag exists
         id: check_tag
         run: |
-          echo "Checking for tag '${release_tag}' via GitHub API..."
+          echo "Checking for tag '${release_tag}' via GitHub API..." | tee -a $GITHUB_STEP_SUMMARY
           tags_json=$(gh api repos/${{ github.repository }}/releases --jq '.[].tag_name')
 
           if [ -z "$tags_json" ]; then
-            echo "No tags found, skipping release check."
+            echo "No tags found, skipping release check." | tee -a $GITHUB_STEP_SUMMARY
             echo "exists=false" >> $GITHUB_OUTPUT
           else
-            echo "Existing release tags:"
-            echo "$tags_json"
+            cat <<EOD  | tee -a $GITHUB_STEP_SUMMARY
+            Existing release tags:
+
+            $tags_json
+
+            EOD
 
             if [[ "${tags_json}" == *"${release_tag}"* ]]; then
               echo "🔎 ${release_tag} exists in releases, comparing assets..."  | tee -a $GITHUB_STEP_SUMMARY
@@ -90,11 +94,17 @@ jobs:
           gh api repos/${{ github.repository }}/actions/runs/${BUILD_ID}/artifacts \
             --jq '.artifacts[] | select(.name | test("^WezTerm-Windows-.*zip$")) | .name' > artifacts.list
 
-          echo "Assets List (${release_tag})"  | tee -a $GITHUB_STEP_SUMMARY
-          cat assets.list  | tee -a $GITHUB_STEP_SUMMARY
+          cat <<EOD | tee -a $GITHUB_STEP_SUMMARY
 
-          echo "Artifacts List (${release_tag})"  | tee -a $GITHUB_STEP_SUMMARY
-          cat artifacts.list | tee -a $GITHUB_STEP_SUMMARY
+          ### Assets List (${release_tag})
+
+          $(< assets.list)
+
+          ### Artifacts List (${release_tag})
+
+          $(< artifacts.list)
+
+          EOD
 
           # Convert workspace and compare artifacts
           if [ "$(wc -l < artifacts.list)" -eq "$(wc -l < assets.list)" ]; then
@@ -126,7 +136,9 @@ jobs:
             export updating=""
           fi
           export datetime=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          echo "- shipped: $datetime - $release_tag $updating" >> SHIPPED.log.md
+          echo "- shipped: $datetime - $release_tag $updating"  \
+            | tee -a $GITHUB_STEP_SUMMARY >> SHIPPED.log.md
+
           git config user.name "alt-icons-actions"
           git config user.email "alt-icons@into.the.void"
           git add SHIPPED.log.md
@@ -168,9 +180,22 @@ jobs:
       - name: Upload artifacts to release
         run: |
           cat <<EOD >> $GITHUB_STEP_SUMMARY
+
           # Upload artifacts
 
           EOD
+
+          if [[ -z $(ls artifacts/*zip ) ]]; then
+            echo "No releasable artifacts..." | tee -a $GITHUB_STEP_SUMMARY
+            cat <<EOD | tee -a $GITHUB_STEP_SUMMARY
+
+          \`\`\`sh
+          $(ls -lha )
+          \`\`\`
+
+          - - -
+          EOD
+          fi
 
           for artifact in artifacts/*.zip; do
             artifact_name=$(basename "$artifact")
