@@ -2,7 +2,7 @@ name: Create Release from Windows Artifacts
 
 env:
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+  
 on:
   workflow_run:
     workflows: ["WezTerm Windows Alt Icon Builds"]
@@ -11,35 +11,51 @@ on:
 jobs:
   release:
     env:
+      BUILD_ID: ${{ github.event.workflow_run.id }}
+      ARTIFACTS_URL: ${{ github.event.workflow_run.artifacts_url }}
       CONCLUSION: ${{ github.event.workflow_run.conclusion }}
     runs-on: ubuntu-latest
     steps:
 
       - uses: actions/checkout@v4
+      - name: Upstream Summary
+        run: |
+          cat <EOD > $GITHUB_STEP_SUMMARY
+          # Upstream Build Summary
 
+          ### BUILD_ID
+
+          **$BUILD_ID**
+
+          ### ARTIFACTS_URL
+
+          $ARTIFACTS_URL
+          EOD
       - name: Exit - upstream failed
         run: |
           echo "👉  Upstream conclusion: ${CONCLUSION-Unknown}"
           if [ "$CONCLUSION" != "success" ]; then
-            echo "🤷 Upstream did not succeed. Cancelling this run..."
+            echo "🤷 Upstream did not succeed. Cancelling this run..." | tee -a $GITHUB_STEP_SUMMARY
             gh api -X POST /repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/cancel
             echo "💤 Sleeping for 5 seconds to let the cancel take effect..."
             sleep 5
           else
-            echo "🚀  Upstream ok..."
+            echo "🚀  Upstream ok..." | tee -a $GITHUB_STEP_SUMMARY
           fi
 
       - name: Get latest wezterm tag
         id: wezterm_tag
         run: |
           tag=$(gh api repos/wezterm/wezterm/releases/latest --jq .tag_name)
+          echo "WezTerm Release Tag: $tag" | tee -a $GITHUB_STEP_SUMMARY
           echo "tag=$tag" >> $GITHUB_OUTPUT
 
       - name: Set release tag variable
         id: set_release_tag
         run: |
-          echo "release_tag=${{ steps.wezterm_tag.outputs.tag }}-alt-icons" >> $GITHUB_OUTPUT
-          echo "release_tag=${{ steps.wezterm_tag.outputs.tag }}-alt-icons" >> $GITHUB_ENV
+          export release_tag=${{ steps.wezterm_tag.outputs.tag }}-alt-icons"
+          echo "release_tag=$release_tag >> $GITHUB_ENV
+          echo "Internal Release Tag: $release_tag" | tee -a $GITHUB_STEP_SUMMARY
 
       - name: Check if release tag exists
         id: check_tag
@@ -55,10 +71,10 @@ jobs:
             echo "$tags_json"
 
             if [[ "${tags_json}" == *"${release_tag}"* ]]; then
-              echo "🔎 ${release_tag} exists in releases, comparing assets..."
+              echo "🔎 ${release_tag} exists in releases, comparing assets..."  | tee -a $GITHUB_STEP_SUMMARY
               echo "exists=true" >> $GITHUB_OUTPUT
             else
-              echo "Tag does not exist in releases"
+              echo "Tag does not exist in releases" | tee -a $GITHUB_STEP_SUMMARY
               echo "exists=false" >> $GITHUB_OUTPUT
             fi
           fi
@@ -71,27 +87,27 @@ jobs:
           gh api repos/${{ github.repository }}/releases/tags/${release_tag} \
             --jq '.assets[] | select(.name | test("^WezTerm-Windows-.*zip$")) | .name' > assets.list
 
-          gh api repos/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}/artifacts \
+          gh api repos/${{ github.repository }}/actions/runs/${BUILD_ID}/artifacts \
             --jq '.artifacts[] | select(.name | test("^WezTerm-Windows-.*zip$")) | .name' > artifacts.list
 
-          echo "Assets List (${release_tag})"
-          cat assets.list
+          echo "Assets List (${release_tag})"  | tee -a $GITHUB_STEP_SUMMARY
+          cat assets.list  | tee -a $GITHUB_STEP_SUMMARY
 
-          echo "Artifacts List (${release_tag})"
-          cat artifacts.list
+          echo "Artifacts List (${release_tag})"  | tee -a $GITHUB_STEP_SUMMARY
+          cat artifacts.list | tee -a $GITHUB_STEP_SUMMARY
 
           # Convert workspace and compare artifacts
           if [ "$(wc -l < artifacts.list)" -eq "$(wc -l < assets.list)" ]; then
             echo "identical=true" >> $GITHUB_OUTPUT
           else
             echo "identical=false" >> $GITHUB_OUTPUT
-            echo "⚠️ there are new artifacts - updating release";
+            echo "⚠️ there are new artifacts - updating release"  | tee -a $GITHUB_STEP_SUMMARY
           fi
 
       - name: Identical Release Exists
         if: ${{ steps.check_tag.outputs.exists == 'true' && steps.compare_assets.outputs.identical == 'true' }}
         run: |
-          echo "🤷 The release exists and assets are identical. Cancelling this run..."
+          echo "🤷 The release exists and assets are identical. Cancelling this run..."  | tee -a $GITHUB_STEP_SUMMARY
           gh api -X POST /repos/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}/cancel
           echo "💤 Sleeping for 5 seconds to let the cancel take effect..."
           sleep 5
@@ -132,11 +148,15 @@ jobs:
 
       - name: Download artifacts as zip files
         run: |
+          cat <EOD > $GITHUB_STEP_SUMMARY
+          # Download artifacts
+
+          EOD
           mkdir artifacts
           gh api repos/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}/artifacts \
           | \
           while IFS=$'\t' read -r name url; do
-            echo "📦 Downloading $name.zip"
+            echo "- 📦 Downloading $name.zip" | tee -a $GITHUB_STEP_SUMMARY
             gh api "$url" > "artifacts/$name.zip"
           done
 
@@ -147,12 +167,18 @@ jobs:
 
       - name: Upload artifacts to release
         run: |
+          cat <EOD > $GITHUB_STEP_SUMMARY
+          # Upload artifacts
+
+          EOD
+
           for artifact in artifacts/*.zip; do
             artifact_name=$(basename "$artifact")
             exists=$(echo "${{ steps.compare_assets.outputs.assets_list }}" | grep -q "^${artifact_name}$"; echo $?)
             if [ $exists -ne 0 ]; then
               gh release upload "${{ steps.set_release_tag.outputs.release_tag }}" "$artifact"
+              echo "- uploaded: ${artifact}" | tee -a $GITHUB_STEP_SUMMARY
             else
-              echo "Skipping already uploaded: ${artifact}"
+              echo "- Skipping already uploaded: ${artifact}" | tee -a $GITHUB_STEP_SUMMARY
             fi
           done
