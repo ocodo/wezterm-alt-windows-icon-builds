@@ -2,7 +2,7 @@ name: Create Release from Windows Artifacts
 
 env:
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  
+
 on:
   workflow_run:
     workflows: ["WezTerm Windows Alt Icon Builds"]
@@ -148,8 +148,11 @@ jobs:
 
       - name: Create or move release tag on latest commit
         run: |
-          git tag -f "$release_tag"
-          git push origin --tags "$release_tag"
+          git tag --force "$release_tag"
+
+          # note this is not a regular push force
+          # just moving the tag.
+          git push origin --tags --force
 
       - name: Create release
         if: ${{ steps.check_tag.outputs.exists != 'true' }}
