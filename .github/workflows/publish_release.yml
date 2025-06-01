@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Upstream Summary
         run: |
-          cat <EOD > $GITHUB_STEP_SUMMARY
+          cat <<EOD >> $GITHUB_STEP_SUMMARY
           # Upstream Build Summary
 
           ### BUILD_ID
@@ -148,7 +148,7 @@ jobs:
 
       - name: Download artifacts as zip files
         run: |
-          cat <EOD > $GITHUB_STEP_SUMMARY
+          cat <<EOD >> $GITHUB_STEP_SUMMARY
           # Download artifacts
 
           EOD
@@ -167,7 +167,7 @@ jobs:
 
       - name: Upload artifacts to release
         run: |
-          cat <EOD > $GITHUB_STEP_SUMMARY
+          cat <<EOD >> $GITHUB_STEP_SUMMARY
           # Upload artifacts
 
           EOD
