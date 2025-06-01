@@ -148,7 +148,7 @@ jobs:
 
       - name: Create or move release tag on latest commit
         run: |
-          git tag "$release_tag"
+          git tag -f "$release_tag"
           git push origin --tags "$release_tag"
 
       - name: Create release
