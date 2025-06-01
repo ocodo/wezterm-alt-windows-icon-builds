@@ -144,11 +144,12 @@ jobs:
           git add SHIPPED.log.md
           git commit -m "Shipped WezTerm Windows $release_tag ${datetime}"
 
-      - name: Create git tag on latest commit
-        if: ${{ steps.check_tag.outputs.exists != 'true' }}
+          # Move release tag to latest commit
+
+      - name: Create or move release tag on latest commit
         run: |
           git tag "$release_tag"
-          git push origin "$release_tag"
+          git push origin --tags "$release_tag"
 
       - name: Create release
         if: ${{ steps.check_tag.outputs.exists != 'true' }}
@@ -193,7 +194,7 @@ jobs:
           \`\`\`sh
           $(ls -lha )
           \`\`\`
-            
+
           ### Artifacts dir
           \`\`\`sh
           $(ls -lha artifacts )
