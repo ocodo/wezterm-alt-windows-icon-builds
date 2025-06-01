@@ -92,7 +92,7 @@ jobs:
             --jq '.assets[] | .name' > assets.list
 
           gh api repos/${{ github.repository }}/actions/runs/${BUILD_ID}/artifacts \
-            --jq '.artifacts[] | .name' > artifacts.list
+            --jq '.artifacts[] | .name' | grep -E -v '(alt-icons[.]zip|wezterm[.]zip)' > artifacts.list
 
           cat <<EOD | tee -a $GITHUB_STEP_SUMMARY
 
@@ -189,8 +189,14 @@ jobs:
             echo "No releasable artifacts..." | tee -a $GITHUB_STEP_SUMMARY
             cat <<EOD | tee -a $GITHUB_STEP_SUMMARY
 
+          ### Runner home dir
           \`\`\`sh
           $(ls -lha )
+          \`\`\`
+            
+          ### Artifacts dir
+          \`\`\`sh
+          $(ls -lha artifacts )
           \`\`\`
 
           - - -
