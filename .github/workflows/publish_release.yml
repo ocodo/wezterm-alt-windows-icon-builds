@@ -89,10 +89,10 @@ jobs:
         run: |
           # Fetch release assets matching the glob pattern and then use it for comparison.
           gh api repos/${{ github.repository }}/releases/tags/${release_tag} \
-            --jq '.assets[] | select(.name | test("^WezTerm-Windows-.*zip$")) | .name' > assets.list
+            --jq '.assets[] | .name' > assets.list
 
           gh api repos/${{ github.repository }}/actions/runs/${BUILD_ID}/artifacts \
-            --jq '.artifacts[] | select(.name | test("^WezTerm-Windows-.*zip$")) | .name' > artifacts.list
+            --jq '.artifacts[] | .name' > artifacts.list
 
           cat <<EOD | tee -a $GITHUB_STEP_SUMMARY
 
