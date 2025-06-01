@@ -72,7 +72,7 @@ jobs:
 
             $tags_json
 
-            EOD
+          EOD
 
             if [[ "${tags_json}" == *"${release_tag}"* ]]; then
               echo "🔎 ${release_tag} exists in releases, comparing assets..."  | tee -a $GITHUB_STEP_SUMMARY
