@@ -54,7 +54,7 @@ jobs:
         id: set_release_tag
         run: |
           export release_tag=${{ steps.wezterm_tag.outputs.tag }}-alt-icons
-          echo "release_tag=$release_tag >> $GITHUB_ENV
+          echo "release_tag=$release_tag" >> $GITHUB_ENV
           echo "Internal Release Tag: $release_tag" | tee -a $GITHUB_STEP_SUMMARY
 
       - name: Check if release tag exists
