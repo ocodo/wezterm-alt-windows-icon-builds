@@ -143,8 +143,7 @@ jobs:
           git config user.email "alt-icons@into.the.void"
           git add SHIPPED.log.md
           git commit -m "Shipped WezTerm Windows $release_tag ${datetime}"
-
-          # Move release tag to latest commit
+          git push
 
       - name: Create or move release tag on latest commit
         run: |
@@ -152,7 +151,7 @@ jobs:
 
           # note this is not a regular push force
           # just moving the tag.
-          git push origin --tags --force
+          git push --tags --force
 
       - name: Create release
         if: ${{ steps.check_tag.outputs.exists != 'true' }}
