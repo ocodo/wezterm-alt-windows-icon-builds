@@ -16,7 +16,6 @@ jobs:
       CONCLUSION: ${{ github.event.workflow_run.conclusion }}
     runs-on: ubuntu-latest
     steps:
-
       - uses: actions/checkout@v4
       - name: Upstream Summary
         run: |
@@ -115,20 +114,21 @@ jobs:
           fi
 
       - name: Identical Release Exists
+        id: identical-release-exists
         if: ${{ steps.check_tag.outputs.exists == 'true' && steps.compare_assets.outputs.identical == 'true' }}
         run: |
-          echo "🤷 The release exists and assets are identical. Cancelling this run..."  | tee -a $GITHUB_STEP_SUMMARY
-          gh api -X POST /repos/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}/cancel
-          echo "💤 Sleeping for 5 seconds to let the cancel take effect..."
-          sleep 5
+          echo "🤷 The release exists and assets are identical"  | tee -a $GITHUB_STEP_SUMMARY
+          echo "early_exit=true" >> $GITHUB_OUTPUT
 
       - name: Generate release notes
+        if: ${{ steps.identical-release-exists.outputs.early_exit != 'true' }}
         env:
           WEZTERM_RELEASE: ${{ steps.wezterm_tag.outputs.tag }}
         run: |
           python3 scripts/generate_release_notes.py > RELEASE.md
 
       - name: Append to shipped.log.md
+        if: ${{ steps.identical-release-exists.outputs.early_exit != 'true' }}
         run: |
           if [ "${{ steps.check_tag.outputs.exists }}" == "true" ]; then
             export updating="[updating]"
@@ -146,6 +146,7 @@ jobs:
           git push
 
       - name: Create or move release tag on latest commit
+        if: ${{ steps.identical-release-exists.outputs.early_exit != 'true' }}
         run: |
           git tag --force "$release_tag"
 
@@ -162,6 +163,7 @@ jobs:
               -F RELEASE.md
 
       - name: Download artifacts as zip files
+        if: ${{ steps.identical-release-exists.outputs.early_exit != 'true' }}
         run: |
           cat <<EOD >> $GITHUB_STEP_SUMMARY
           # Download artifacts
@@ -180,11 +182,12 @@ jobs:
 
 
       - name: Update Relase Notes
-        if: ${{ steps.check_tag.outputs.exists == 'true' }}
+        if: ${{ steps.check_tag.outputs.exists == 'true' && steps.identical-release-exists.outputs.early_exit != 'true' }}
         run: |
           gh release edit ${release_tag} -F RELEASE.md
 
       - name: Upload artifacts to release
+        if: ${{ steps.identical-release-exists.outputs.early_exit != 'true' }}
         run: |
           cat <<EOD >> $GITHUB_STEP_SUMMARY
 
