@@ -174,8 +174,8 @@ jobs:
             --jq '.artifacts[] | [.name, .archive_download_url] | @tsv' | \
             while IFS=$'\t' read -r name url; do
               if [[ $name == WezTerm-windows-*.zip ]]; then
-                echo "- 📦 Downloading $name.zip" | tee -a "$GITHUB_STEP_SUMMARY"
-                gh api "$url" > "artifacts/$name.zip"
+                echo "- 📦 Downloading $name" | tee -a "$GITHUB_STEP_SUMMARY"
+                gh api "$url" > "artifacts/$name"
               fi
             done
 
