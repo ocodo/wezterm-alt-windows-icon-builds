@@ -194,8 +194,9 @@ jobs:
 
           if [[ -z $(ls artifacts/*zip ) ]]; then
             echo "No releasable artifacts..." | tee -a $GITHUB_STEP_SUMMARY
-            cat <<EOD | tee -a $GITHUB_STEP_SUMMARY
+          fi
 
+          cat <<EOD | tee -a $GITHUB_STEP_SUMMARY
           ### Runner home dir
           \`\`\`sh
           $(ls -lha )
@@ -208,7 +209,6 @@ jobs:
 
           - - -
           EOD
-          fi
 
           for artifact in artifacts/*.zip; do
             artifact_name=$(basename "$artifact")
