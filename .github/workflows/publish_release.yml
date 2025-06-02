@@ -168,13 +168,17 @@ jobs:
           # Download artifacts
 
           EOD
-          mkdir artifacts
+          mkdir -p artifacts
+
           gh api repos/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}/artifacts \
-          | \
-          while IFS=$'\t' read -r name url; do
-            echo "- 📦 Downloading $name.zip" | tee -a $GITHUB_STEP_SUMMARY
-            gh api "$url" > "artifacts/$name.zip"
-          done
+            --jq '.artifacts[] | [.name, .archive_download_url] | @tsv' | \
+            while IFS=$'\t' read -r name url; do
+              if [[ $name == WezTerm-windows-*.zip ]]; then
+                echo "- 📦 Downloading $name.zip" | tee -a "$GITHUB_STEP_SUMMARY"
+                gh api "$url" > "artifacts/$name.zip"
+              fi
+            done
+
 
       - name: Update Relase Notes
         if: ${{ steps.check_tag.outputs.exists == 'true' }}
