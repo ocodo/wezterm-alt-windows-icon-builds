@@ -214,7 +214,7 @@ jobs:
             artifact_name=$(basename "$artifact")
             exists=$(echo "${{ steps.compare_assets.outputs.assets_list }}" | grep -q "^${artifact_name}$"; echo $?)
             if [ $exists -ne 0 ]; then
-              gh release upload "${{ steps.set_release_tag.outputs.release_tag }}" "$artifact"
+              gh release upload "$release_tag" "$artifact"
               echo "- uploaded: ${artifact}" | tee -a $GITHUB_STEP_SUMMARY
             else
               echo "- Skipping already uploaded: ${artifact}" | tee -a $GITHUB_STEP_SUMMARY
