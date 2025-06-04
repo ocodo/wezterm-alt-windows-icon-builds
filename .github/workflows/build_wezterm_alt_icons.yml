@@ -1,6 +1,12 @@
 name: WezTerm Windows Alt Icon Builds
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - "/alt-icons/*"
+
   workflow_dispatch:
     inputs:
       debugging:
