@@ -13,7 +13,7 @@ For each custom icon listed below, we:
   - Size between 400x400 and 1024x1024 pixels
   - PNG format
   - Transparent background
-  - No unnecessary padding see `bin/unpad-all`
+  - No unnecessary padding (this is automated for you)
 
 - Get support 👍 for your submission
   - Add previews to the PR discussion
