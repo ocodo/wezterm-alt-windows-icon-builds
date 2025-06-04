@@ -100,7 +100,7 @@ jobs:
         icon: ${{ fromJson(needs.icon-matrix.outputs.matrix) }}
     runs-on: ubuntu-latest
     steps:
-      - run: sudo apt install wine64 imagemagick
+      - run: sudo apt update && sudo apt install wine64 imagemagick
 
       - uses: actions/download-artifact@v4
         with:
