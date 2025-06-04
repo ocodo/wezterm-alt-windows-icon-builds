@@ -100,11 +100,7 @@ jobs:
         icon: ${{ fromJson(needs.icon-matrix.outputs.matrix) }}
     runs-on: ubuntu-latest
     steps:
-      - uses: awalsh128/cache-apt-pkgs-action@latest
-        with:
-          packages: wine64 imagemagick
-          version: 1.0
-          execute_install_scripts: true
+      - run: sudo apt install wine64 imagemagick
 
       - uses: actions/download-artifact@v4
         with:
