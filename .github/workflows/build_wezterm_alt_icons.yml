@@ -98,13 +98,8 @@ jobs:
     strategy:
       matrix:
         icon: ${{ fromJson(needs.icon-matrix.outputs.matrix) }}
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
-      - uses: awalsh128/cache-apt-pkgs-action@latest
-        with:
-          packages: wine64 imagemagick
-          version: 1.0
-
       - uses: actions/download-artifact@v4
         with:
           name: wezterm.zip
@@ -121,54 +116,41 @@ jobs:
         with:
           detached: true
 
+      - name: "Install Dependencies"
+        shell: pwsh
+        run: |
+          Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
+          scoop install imagemagick rcedit
+
       - name: "${{ matrix.icon.file }} → ${{ matrix.icon.ico }}"
+        shell: bash
         run: |
           export image="${{ matrix.icon.file }}"
-          convert -background transparent -define icon:auto-resize="16,32,48,64,96,128,256" "$image" "${{ matrix.icon.ico }}"
+          magick -background transparent -define icon:auto-resize="16,32,48,64,96,128,256" "$image" "${{ matrix.icon.ico }}"
 
       - name: "Create Zip Package with ${{ matrix.icon.ico }}"
         id: zip-windows-package
-        run: |          
-          # Step 1: Set parameters
-          WEZTERM_VERSION="${{ needs.get-wezterm.outputs.version }}"
-          ICON_NAME="${{ matrix.icon.name }}"
-          RCEDIT_URL="https://github.com/electron/rcedit/releases/download/v2.0.0/rcedit-x64.exe"
-          RCEDIT_PATH="$HOME/rcedit-x64.exe"  # Path to store the downloaded rcedit
-          NEW_FOLDER_NAME="WezTerm-windows-$ICON_NAME-$WEZTERM_VERSION"
-          EXE_PATH="$NEW_FOLDER_NAME/wezterm-gui.exe"
-          ICON_PATH="${{ matrix.icon.ico }}"
-          
-          # Step 2: Download rcedit if it doesn't exist
-          if [ ! -f "$RCEDIT_PATH" ]; then
-              echo "Downloading rcedit from $RCEDIT_URL"
-              curl -L -o "$RCEDIT_PATH" "$RCEDIT_URL"
-          else
-              echo "rcedit already downloaded."
-          fi
-          
-          # Step 3: Move the wezterm folder into the new folder
-          echo "Processing $ICON_NAME..."
-          mkdir -p "$NEW_FOLDER_NAME"
-          mv wezterm "$NEW_FOLDER_NAME"  # Move the wezterm folder into the new folder
-          
-          # Step 4: Verify if the target exe exists
-          if [ ! -f "$EXE_PATH" ]; then
-              echo "Error: Target executable not found: $EXE_PATH"
-              exit 1
-          fi
-          
-          # Step 5: Use Wine to patch the executable icon with rcedit
-          echo "Patching executable icon using rcedit: $EXE_PATH with icon $ICON_PATH"
-          wine "$RCEDIT_PATH" "$EXE_PATH" --set-icon "$ICON_PATH"
-          
-          # Step 6: Verify if the patch was successful
-          if [ $? -eq 0 ]; then
-              echo "🎉 Done processing $ICON_NAME."
-          else
-              echo "❌ Failed to patch icon for $ICON_NAME."
-              exit 1
-          fi
+        shell: pwsh
+        run: |
+          # Import the wezterm_version from the previous step's output
+          $wezterm_version = "${{ needs.get-wezterm.outputs.version }}"
+          Write-Host "🖥️ wezterm_version=$wezterm_version"
 
+          $IconName = "${{ matrix.icon.name }}"
+
+          # New folder name combining version and icon part
+          $newFolderName = "WezTerm-windows-$IconName-$wezterm_version"
+
+          Write-Host "Processing '$IconName'..."
+
+          Move-Item -Path wezterm -Destination $newFolderName
+
+          $exePath = Join-Path -Path $newFolderName -ChildPath "wezterm-gui.exe"
+
+          Write-Host "Patching executable icon using rcedit: $exePath with icon ${{ matrix.icon.ico }}"
+          ~\scoop\shims\rcedit.exe $exePath --set-icon ${{ matrix.icon.ico }}
+
+          Write-Host "🎉 Done processing $IconName."
 
       - name: "🍹 Upload artifact"
         uses: actions/upload-artifact@v4
