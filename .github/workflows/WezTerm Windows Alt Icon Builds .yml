@@ -22,6 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.get-wezterm-latest.outputs.version }}
+      new_version: ${{ steps.get-wezterm-latest.outputs.new_version }}
     steps:
 
       - name: Get WezTerm Latest Release Version Tag
@@ -45,7 +46,13 @@ jobs:
         run: |
           export wezterm_version="${{ steps.get-wezterm-latest.outputs.version }}"
 
-          echo "wezterm_version=$wezterm_version"
+          if [[ -f wezterm_version && "$werterm_version" != "$(< wezterm_version | tr -d '\n')" ]]; then
+            echo "wezterm_version=$wezterm_version" >  wezterm_version
+            git add wezterm_version
+            git commit -m "wezterm_version: $wezterm_version"
+            git push
+            echo "new_version=true" >> $GITHUB_OUTPUT
+          fi
 
           export wezterm_folder="WezTerm-windows-${wezterm_version}"
           echo "wezterm_folder=$wezterm_folder"
@@ -125,7 +132,7 @@ jobs:
 
       - name: "Create Zip Package with ${{ matrix.icon.ico }}"
         id: zip-windows-package
-        run: |          
+        run: |
           # Step 1: Set parameters
           WEZTERM_VERSION="${{ needs.get-wezterm.outputs.version }}"
           ICON_NAME="${{ matrix.icon.name }}"
@@ -134,7 +141,7 @@ jobs:
           NEW_FOLDER_NAME="WezTerm-windows-$ICON_NAME-$WEZTERM_VERSION"
           EXE_PATH="$NEW_FOLDER_NAME/wezterm-gui.exe"
           ICON_PATH="${{ matrix.icon.ico }}"
-          
+
           # Step 2: Download rcedit if it doesn't exist
           if [ ! -f "$RCEDIT_PATH" ]; then
               echo "Downloading rcedit from $RCEDIT_URL"
@@ -142,22 +149,22 @@ jobs:
           else
               echo "rcedit already downloaded."
           fi
-          
+
           # Step 3: Move the wezterm folder into the new folder
           echo "Processing $ICON_NAME..."
           mkdir -p "$NEW_FOLDER_NAME"
           mv wezterm "$NEW_FOLDER_NAME"  # Move the wezterm folder into the new folder
-          
+
           # Step 4: Verify if the target exe exists
           if [ ! -f "$EXE_PATH" ]; then
               echo "Error: Target executable not found: $EXE_PATH"
               exit 1
           fi
-          
+
           # Step 5: Use Wine to patch the executable icon with rcedit
           echo "Patching executable icon using rcedit: $EXE_PATH with icon $ICON_PATH"
           wine "$RCEDIT_PATH" "$EXE_PATH" --set-icon "$ICON_PATH"
-          
+
           # Step 6: Verify if the patch was successful
           if [ $? -eq 0 ]; then
               echo "🎉 Done processing $ICON_NAME."
@@ -166,7 +173,6 @@ jobs:
               exit 1
           fi
 
-
       - name: "🍹 Upload artifact"
         uses: actions/upload-artifact@v4
         with:
@@ -174,3 +180,13 @@ jobs:
           path: "WezTerm-windows-${{ matrix.icon.name }}-${{ env.version }}"
           retention-days: 2
 
+  publish:
+    needs:
+      - get-wezterm
+      - patch-wezterm-icon
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./.github/workflows/Create Release From Windows Artifacts.yml
+        if: ${{ github.event_name == 'push' || needs.get-wezterm.outputs.new_version }}
+        with:
+          wezterm_version: ${{ needs.get-wezterm.outputs.version }}
