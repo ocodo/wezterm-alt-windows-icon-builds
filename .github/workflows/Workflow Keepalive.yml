@@ -1,4 +1,4 @@
-name: "Workflow Keepalive"
+name: Workflow Keepalive
 
 on:
   schedule:
@@ -6,9 +6,9 @@ on:
   workflow_dispatch:
     inputs:
       reason:
-        description: "Manual trigger reason"
+        description: Manual trigger reason
         required: false
-        default: "Maintenance"
+        default: Maintenance
 
 env:
   THRESHOLD_DAYS: 45
@@ -17,13 +17,13 @@ env:
 
 jobs:
   keepalive:
-    name: "🔵 Pulse Check"
+    name: 🔵 Pulse Check
     runs-on: ubuntu-latest
     steps:
-      - name: "Checkout"
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: "Calculate Inactivity"
+      - name: Calculate Inactivity
         id: timekeeper
         run: |
           LAST_COMMIT_EPOCH=$(git log -1 --format=%ct)
@@ -32,7 +32,7 @@ jobs:
           echo "inactive_days=$INACTIVE_DAYS" >> $GITHUB_OUTPUT
           echo "last_commit_date=$(date -d @$LAST_COMMIT_EPOCH '+%Y-%m-%d')" >> $GITHUB_OUTPUT
 
-      - name: "Set Reason"
+      - name: Set Reason
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] \
                 && [ -n "${{ github.event.inputs.reason }}" ]
@@ -42,7 +42,7 @@ jobs:
             echo "REASON=Scheduled" >> $GITHUB_ENV
           fi
 
-      - name: "Conditional Keepalive"
+      - name: Conditional Keepalive
         if: ${{ fromJson(steps.timekeeper.outputs.inactive_days) > fromJson(env.THRESHOLD_DAYS) }}
         run: |
           git config user.name "$GIT_ID"
@@ -53,7 +53,7 @@ jobs:
 
           git push
 
-      - name: "✅ Status Report"
+      - name: ✅ Status Report
         run: |
           echo "=== Keepalive Report ==="
           echo "Last commit: ${{ steps.timekeeper.outputs.last_commit_date }}"
