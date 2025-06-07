@@ -18,7 +18,7 @@ on:
         default: false
 
 jobs:
-  get_wezterm:
+  get-wezterm:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.get-latest-wezterm.outputs.version }}
@@ -84,8 +84,8 @@ jobs:
           retention-days: 2
 
   icon-matrix:
-    needs: get_wezterm
-    if: ${{ needs.get_wezterm.outputs.new_build_required == 'true' || github.event_name == 'push' }}
+    needs: get-wezterm
+    if: ${{ needs.get-wezterm.outputs.new_build_required == 'true' || github.event_name == 'push' }}
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
@@ -106,10 +106,10 @@ jobs:
 
   patch-wezterm-icon:
     needs:
-      - get_wezterm
+      - get-wezterm
       - icon-matrix
     env:
-      version: ${{ needs.get_wezterm.outputs.version }}
+      version: ${{ needs.get-wezterm.outputs.version }}
     strategy:
       matrix:
         icon: ${{ fromJson(needs.icon-matrix.outputs.matrix) }}
@@ -142,7 +142,7 @@ jobs:
         id: zip-windows-package
         run: |
           # Step 1: Set parameters
-          WEZTERM_VERSION="${{ needs.get_wezterm.outputs.version }}"
+          WEZTERM_VERSION="${{ needs.get-wezterm.outputs.version }}"
           ICON_NAME="${{ matrix.icon.name }}"
           RCEDIT_URL="https://github.com/electron/rcedit/releases/download/v2.0.0/rcedit-x64.exe"
           RCEDIT_PATH="$HOME/rcedit-x64.exe"  # Path to store the downloaded rcedit
@@ -189,26 +189,26 @@ jobs:
 
   publish:
     needs:
-      - get_wezterm
+      - get-wezterm
       - patch-wezterm-icon
     runs-on: ubuntu-latest
     steps:
       - uses: ./.github/workflows/Create Release From Windows Artifacts.yml
         with:
-          wezterm_version: ${{ needs.get_wezterm.outputs.version }}
+          wezterm_version: ${{ needs.get-wezterm.outputs.version }}
 
   complete:
     needs:
       - publish
-      - get_wezterm
+      - get-wezterm
     runs-on: ubuntu-latest
-    if: ${{ needs.get_wezterm.outputs.new_build_required == 'true' }}
+    if: ${{ needs.get-wezterm.outputs.new_build_required == 'true' }}
     steps:
       - uses: actions/checkout@v4
       - name: Update last built
         run: |
-          echo "${{ needs.get_wezterm.outputs.version }}" > wezterm_version
+          echo "${{ needs.get-wezterm.outputs.version }}" > wezterm_version
           git add wezterm_version
-          git commit "Built ${{ needs.get_wezterm.outputs.version }}"
+          git commit "Built ${{ needs.get-wezterm.outputs.version }}"
           git push origin main
-          echo "### Built ${{ needs.get_wezterm.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "### Built ${{ needs.get-wezterm.outputs.version }}" >> $GITHUB_STEP_SUMMARY
