@@ -36,10 +36,9 @@ jobs:
           # Output the tag name using the new syntax
           echo "version=$version" >> $GITHUB_OUTPUT
 
-
       - name: Get Last Built Version
         run: wget https://raw.githubusercontent.com/ocodo/wezterm-alt-windows-icon-builds/refs/heads/main/wezterm_version
-
+        
       - name: Set release tag variable
         id: vars
         run: |
@@ -49,13 +48,12 @@ jobs:
         id: get-wezterm-zip
         run: |
           export wezterm_version="${{ steps.get-wezterm-latest.outputs.version }}"
-          echo "last_built_version=$(< wezterm_version)" >> $GITHUB_OUTPUT
-          if [[ -f wezterm_version && "$werterm_version" != "$(< wezterm_version | tr -d '\n')" ]]; then
-            echo "wezterm_version=$wezterm_version" >  wezterm_version
-            git add wezterm_version
-            git commit -m "wezterm_version: $wezterm_version"
-            git push
+          export last_built_version=$(< wezterm_version | tr -d '\n')
+          echo "last_built_version=$last_built_version" >> $GITHUB_OUTPUT
+          if [[ "$werterm_version" != "$last_built_version" ]]; then
             echo "new_version=true" >> $GITHUB_OUTPUT
+          else
+            echo "new_version=false" >> $GITHUB_OUTPUT
           fi
 
           export wezterm_folder="WezTerm-windows-${wezterm_version}"
@@ -85,7 +83,7 @@ jobs:
           retention-days: 2
 
   icon-matrix:
-    if: ${{ github.event_name == 'push' || needs.get-wezterm.outputs.new_version }}
+    if: ${{ github.event_name == 'push' || needs.get-wezterm.outputs.new_version == 'true' }}
     needs: get-wezterm
     runs-on: ubuntu-latest
     outputs:
@@ -197,3 +195,19 @@ jobs:
       - uses: ./.github/workflows/Create Release From Windows Artifacts.yml
         with:
           wezterm_version: ${{ needs.get-wezterm.outputs.version }}
+
+  complete:
+    needs:
+      - publish
+      - get-wezterm
+    runs-on: ubuntu-latest
+    if: ${{ needs.get-wezterm.outputs.new_version == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update last built
+        run: |
+          echo "${{ needs.get-wezterm.outputs.version }}" > wezterm_version
+          git add wezterm_version
+          git commit "Built ${{ needs.get-wezterm.outputs.version }}"
+          git push origin main
+          echo "### Built ${{ needs.get-wezterm.outputs.version }}" >> $GITHUB_STEP_SUMMARY
