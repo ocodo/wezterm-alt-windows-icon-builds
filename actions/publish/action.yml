@@ -1,14 +1,17 @@
 name: Create Release from Windows Artifacts
 
-env:
-  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
 on:
   workflow_call:
     inputs:
       wezterm_version:
         type: string
         required: true
+      token:
+        type: string
+        required: true
+
+env:
+  GH_TOKEN: ${{ inputs.token }}
 
 jobs:
   release_logic:

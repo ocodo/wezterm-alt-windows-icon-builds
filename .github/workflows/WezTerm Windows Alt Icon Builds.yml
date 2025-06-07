@@ -205,9 +205,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: ./actions/publish
         with:
           wezterm_version: ${{ needs.get-wezterm.outputs.version }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
   complete:
     needs:
