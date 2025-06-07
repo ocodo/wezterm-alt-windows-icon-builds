@@ -74,7 +74,6 @@ jobs:
           # WezTerm Windows Alt-Icons Build
           - Version: ${{ steps.get-wezterm-latest.outputs.version }}
           - Last Packaged Version: ${{ steps.get-wezterm-zip.outputs.last_built_version }}
-            - (debug: $(< wezterm_version))
           - New build required: ${{ steps.get-wezterm-zip.outputs.new_build_required }}
           EOD
       - uses: actions/upload-artifact@v4
