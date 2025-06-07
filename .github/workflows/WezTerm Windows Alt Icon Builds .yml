@@ -38,7 +38,7 @@ jobs:
 
       - name: Get Last Built Version
         run: wget https://raw.githubusercontent.com/ocodo/wezterm-alt-windows-icon-builds/refs/heads/main/wezterm_version
-        
+
       - name: Set release tag variable
         id: vars
         run: |
@@ -74,6 +74,7 @@ jobs:
           # WezTerm Windows Alt-Icons Build
           - Version: ${{ steps.get-wezterm-latest.outputs.version }}
           - Last Packaged Version: ${{ steps.get-wezterm-zip.outputs.last_built_version }}
+            - (debug: $(< wezterm_version))
           - New build required: ${{ steps.get-wezterm-zip.outputs.new_build_required }}
           EOD
       - uses: actions/upload-artifact@v4
@@ -83,8 +84,8 @@ jobs:
           retention-days: 2
 
   icon-matrix:
-    if: ${{ github.event_name == 'push' || needs.get-wezterm.outputs.new_build_required == 'true' }}
     needs: get-wezterm
+    if: ${{ github.event_name == 'push' || needs.get-wezterm.outputs.new_build_required == 'true' }}
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
