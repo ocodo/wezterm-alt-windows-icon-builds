@@ -18,15 +18,15 @@ on:
         default: false
 
 jobs:
-  get-wezterm:
+  get_wezterm:
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.get-wezterm-latest.outputs.version }}
-      new_build_required: ${{ steps.get-wezterm-latest.outputs.new_build_required }}
+      version: ${{ steps.get-latest-wezterm.outputs.version }}
+      new_build_required: ${{ steps.get-zip-wezterm.outputs.new_build_required }}
     steps:
 
       - name: Get WezTerm Latest Release Version Tag
-        id: get-wezterm-latest
+        id: get-latest-wezterm
         run: |
           version=$(
             curl -s "https://api.github.com/repos/wezterm/wezterm/releases/latest" \
@@ -42,12 +42,12 @@ jobs:
       - name: Set release tag variable
         id: vars
         run: |
-          echo "release_tag=${{ steps.get-wezterm-latest.outputs.version }}-alt-icons" >> $GITHUB_OUTPUT
+          echo "release_tag=${{ steps.get-latest-wezterm.outputs.version }}-alt-icons" >> $GITHUB_OUTPUT
 
       - name: Get WezTerm Windows Zip
-        id: get-wezterm-zip
+        id: get-zip-wezterm
         run: |
-          export wezterm_version="${{ steps.get-wezterm-latest.outputs.version }}"
+          export wezterm_version="${{ steps.get-latest-wezterm.outputs.version }}"
           export last_built_version=$(< wezterm_version | tr -d '\n')
           echo "last_built_version=$last_built_version" >> $GITHUB_OUTPUT
           if [[ "$wezterm_version" != "$last_built_version" ]]; then
@@ -68,13 +68,13 @@ jobs:
           rm wezterm-windows-temp.zip
           mv $wezterm_folder wezterm
 
-      - name: "Version ${{ steps.get-wezterm-latest.outputs.version }}"
+      - name: "Version ${{ steps.get-latest-wezterm.outputs.version }}"
         run: |
           cat <<EOD | tee -a $GITHUB_STEP_SUMMARY
           # WezTerm Windows Alt-Icons Build
-          - Version: ${{ steps.get-wezterm-latest.outputs.version }}
-          - Last Packaged Version: ${{ steps.get-wezterm-zip.outputs.last_built_version }}
-          - New build required: ${{ steps.get-wezterm-zip.outputs.new_build_required }}
+          - Version: ${{ steps.get-latest-wezterm.outputs.version }}
+          - Last Packaged Version: ${{ steps.get-zip-wezterm.outputs.last_built_version }}
+          - New build required: ${{ steps.get-zip-wezterm.outputs.new_build_required }}
           - github.event_name: ${{ github.event_name }}
           EOD
       - uses: actions/upload-artifact@v4
@@ -84,17 +84,17 @@ jobs:
           retention-days: 2
 
   debug_new_build_required:
-    needs: get-wezterm
+    needs: get_wezterm
     runs-on: ubuntu-latest
     steps:
       - run: |
           cat <<EOD | tee -a $GITHUB_STEP_SUMMARY
-          # DEBUGGING needs.get-wezterm.outputs.new_build_required: ${{ needs.get-wezterm.outputs.new_build_required }}
+          # DEBUGGING needs.get_wezterm.outputs.new_build_required: ${{ needs.get_wezterm.outputs.new_build_required }}
           EOD
 
   icon-matrix:
-    needs: get-wezterm
-    if: ${{ needs.get-wezterm.outputs.new_build_required == 'true' }}
+    needs: get_wezterm
+    if: ${{ needs.get_wezterm.outputs.new_build_required == 'true' }}
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
@@ -115,10 +115,10 @@ jobs:
 
   patch-wezterm-icon:
     needs:
-      - get-wezterm
+      - get_wezterm
       - icon-matrix
     env:
-      version: ${{ needs.get-wezterm.outputs.version }}
+      version: ${{ needs.get_wezterm.outputs.version }}
     strategy:
       matrix:
         icon: ${{ fromJson(needs.icon-matrix.outputs.matrix) }}
@@ -151,7 +151,7 @@ jobs:
         id: zip-windows-package
         run: |
           # Step 1: Set parameters
-          WEZTERM_VERSION="${{ needs.get-wezterm.outputs.version }}"
+          WEZTERM_VERSION="${{ needs.get_wezterm.outputs.version }}"
           ICON_NAME="${{ matrix.icon.name }}"
           RCEDIT_URL="https://github.com/electron/rcedit/releases/download/v2.0.0/rcedit-x64.exe"
           RCEDIT_PATH="$HOME/rcedit-x64.exe"  # Path to store the downloaded rcedit
@@ -198,26 +198,26 @@ jobs:
 
   publish:
     needs:
-      - get-wezterm
+      - get_wezterm
       - patch-wezterm-icon
     runs-on: ubuntu-latest
     steps:
       - uses: ./.github/workflows/Create Release From Windows Artifacts.yml
         with:
-          wezterm_version: ${{ needs.get-wezterm.outputs.version }}
+          wezterm_version: ${{ needs.get_wezterm.outputs.version }}
 
   complete:
     needs:
       - publish
-      - get-wezterm
+      - get_wezterm
     runs-on: ubuntu-latest
-    if: ${{ needs.get-wezterm.outputs.new_build_required == 'true' }}
+    if: ${{ needs.get_wezterm.outputs.new_build_required == 'true' }}
     steps:
       - uses: actions/checkout@v4
       - name: Update last built
         run: |
-          echo "${{ needs.get-wezterm.outputs.version }}" > wezterm_version
+          echo "${{ needs.get_wezterm.outputs.version }}" > wezterm_version
           git add wezterm_version
-          git commit "Built ${{ needs.get-wezterm.outputs.version }}"
+          git commit "Built ${{ needs.get_wezterm.outputs.version }}"
           git push origin main
-          echo "### Built ${{ needs.get-wezterm.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "### Built ${{ needs.get_wezterm.outputs.version }}" >> $GITHUB_STEP_SUMMARY
