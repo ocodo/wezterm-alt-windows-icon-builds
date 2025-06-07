@@ -205,7 +205,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/workflows/Create Release From Windows Artifacts.yml
+      - uses: ./actions/publish
         with:
           wezterm_version: ${{ needs.get-wezterm.outputs.version }}
 
