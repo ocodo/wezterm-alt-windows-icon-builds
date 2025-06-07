@@ -36,6 +36,10 @@ jobs:
           # Output the tag name using the new syntax
           echo "version=$version" >> $GITHUB_OUTPUT
 
+
+      - name: Get Last Built Version
+        run: wget https://raw.githubusercontent.com/ocodo/wezterm-alt-windows-icon-builds/refs/heads/main/wezterm_version
+
       - name: Set release tag variable
         id: vars
         run: |
