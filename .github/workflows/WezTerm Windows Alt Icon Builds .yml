@@ -75,6 +75,7 @@ jobs:
           - Version: ${{ steps.get-wezterm-latest.outputs.version }}
           - Last Packaged Version: ${{ steps.get-wezterm-zip.outputs.last_built_version }}
           - New build required: ${{ steps.get-wezterm-zip.outputs.new_build_required }}
+          - github.event_name: ${{ github.event_name }}
           EOD
       - uses: actions/upload-artifact@v4
         with:
@@ -84,7 +85,7 @@ jobs:
 
   icon-matrix:
     needs: get-wezterm
-    if: ${{ needs.get-wezterm.outputs.new_build_required == 'true' || github.event_name == 'push' }}
+    if: ${{ needs.get-wezterm.outputs.new_build_required == 'true' }}
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
