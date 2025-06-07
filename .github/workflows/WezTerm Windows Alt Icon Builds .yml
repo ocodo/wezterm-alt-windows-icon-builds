@@ -152,8 +152,7 @@ jobs:
 
           # Step 3: Move the wezterm folder into the new folder
           echo "Processing $ICON_NAME..."
-          mkdir -p "$NEW_FOLDER_NAME"
-          mv wezterm "$NEW_FOLDER_NAME"  # Move the wezterm folder into the new folder
+          mv wezterm $NEW_FOLDER_NAME
 
           # Step 4: Verify if the target exe exists
           if [ ! -f "$EXE_PATH" ]; then
