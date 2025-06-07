@@ -1,136 +1,102 @@
 name: Create Release from Windows Artifacts
+description: ""
+author: jasonm23
 
-on:
-  workflow_call:
-    inputs:
-      wezterm_version:
-        type: string
-        required: true
-      token:
-        type: string
-        required: true
+inputs:
+  wezterm_version:
+    type: string
+    required: true
+  token:
+    type: string
+    required: true
 
 env:
-  GH_TOKEN: ${{ github.event.inputs.token }}
+  GH_TOKEN: ${{ inputs.token }}
+  release_tag: ${{ inputs.wezterm_version }}-alt-icons
 
-jobs:
-  release_logic:
-    runs-on: ubuntu-latest
-    env:
-      release_tag: ${{ github.event.inputs.wezterm_version }}-alt-icons
-    outputs:
-      release_tag: ${{ github.event.inputs.wezterm_version }}-alt-icons
-      identical: ${{ steps.compare_assets.outputs.identical }}
-      assets_list: ${{ steps.compare_assets.outputs.assets_list }}
-    steps:
-      - uses: actions/checkout@v4
+runs:
+  using: "compostite"
+  steps:
+    - uses: actions/checkout@v4
 
-      - name: Display Release Tag
-        run: |
-          cat <<EOD | tee -a $GITHUB_STEP_SUMMARY
-          # Release $release_tag
+    - name: Display Release Tag
+      run: |
+        cat <<EOD | tee -a $GITHUB_STEP_SUMMARY
+        # Release $release_tag
 
-          EOD
+        EOD
 
-      - name: Check if release tag exists
-        id: check_tag
-        run: |
-          echo "Checking for tag '${release_tag}' via GitHub API..." | tee -a $GITHUB_STEP_SUMMARY
-          tags_json=$(gh api repos/${{ github.repository }}/releases --jq '.[].tag_name')
+    - name: Check if release tag exists
+      id: check_tag
+      run: |
+        echo "Checking for tag '${release_tag}' via GitHub API..." | tee -a $GITHUB_STEP_SUMMARY
+        tags_json=$(gh api repos/${{ github.repository }}/releases --jq '.[].tag_name')
 
-          if [[ -z "$tags_json" || ! "${tags_json}" == *"${release_tag}"* ]]; then
-            echo "No existing release tag, creating new release." | tee -a $GITHUB_STEP_SUMMARY
-            echo "exists=false" >> $GITHUB_OUTPUT
-          else
-            echo "Existing release tag found: $release_tag" | tee -a $GITHUB_STEP_SUMMARY
-            echo "exists=true" >> $GITHUB_OUTPUT
-          fi
+        if [[ -z "$tags_json" || ! "${tags_json}" == *"${release_tag}"* ]]; then
+          echo "No existing release tag, creating new release." | tee -a $GITHUB_STEP_SUMMARY
+          echo "exists=false" >> $GITHUB_OUTPUT
+        else
+          echo "Existing release tag found: $release_tag" | tee -a $GITHUB_STEP_SUMMARY
+          echo "exists=true" >> $GITHUB_OUTPUT
+        fi
 
-      - name: Check Existing Release Assets
-        if: ${{ steps.check_tag.outputs.exists == 'true' }}
-        id: compare_assets
-        run: |
-          gh api repos/${{ github.repository }}/releases/tags/${release_tag} --jq '.assets[] | .name' > assets.list
-          gh api repos/${{ github.repository }}/actions/runs/${BUILD_ID}/artifacts --jq '.artifacts[] | .name' | grep -E -v '(alt-icons[.]zip|wezterm[.]zip)' > artifacts.list
+    - name: Check Existing Release Assets
+      if: ${{ steps.check_tag.outputs.exists == 'true' }}
+      id: compare_assets
+      run: |
+        gh api repos/${{ github.repository }}/releases/tags/${release_tag} --jq '.assets[] | .name' > assets.list
+        gh api repos/${{ github.repository }}/actions/runs/${BUILD_ID}/artifacts --jq '.artifacts[] | .name' | grep -E -v '(alt-icons[.]zip|wezterm[.]zip)' > artifacts.list
 
-          echo "assets_list=$(< assets_list)" >> $GITHUB_OUTPUT
+        echo "assets_list=$(< assets_list)" >> $GITHUB_OUTPUT
 
-          # Compare asset names with artifact names
-          cat <<EOD | tee -a $GITHUB_STEP_SUMMARY
-          ### Existing Release Assets
-          $(< assets.list)
+        # Compare asset names with artifact names
+        cat <<EOD | tee -a $GITHUB_STEP_SUMMARY
+        ### Existing Release Assets
+        $(< assets.list)
 
-          ### Artifacts from Triggering Workflow
-          $(< artifacts.list)
-          EOD
+        ### Artifacts from Triggering Workflow
+        $(< artifacts.list)
+        EOD
 
-          if [ "$(wc -l < artifacts.list)" -eq "$(wc -l < assets.list)" ]; then
-            # Compare names (not content) of assets and artifacts
-            if diff <(sort assets.list) <(sort artifacts.list); then
-              echo "identical=true" >> $GITHUB_OUTPUT
-            else
-              echo "identical=false" >> $GITHUB_OUTPUT
-              echo "⚠️ New artifacts found, release needs update." | tee -a $GITHUB_STEP_SUMMARY
-            fi
+        if [ "$(wc -l < artifacts.list)" -eq "$(wc -l < assets.list)" ]; then
+          # Compare names (not content) of assets and artifacts
+          if diff <(sort assets.list) <(sort artifacts.list); then
+            echo "identical=true" >> $GITHUB_OUTPUT
           else
             echo "identical=false" >> $GITHUB_OUTPUT
             echo "⚠️ New artifacts found, release needs update." | tee -a $GITHUB_STEP_SUMMARY
           fi
+        else
+          echo "identical=false" >> $GITHUB_OUTPUT
+          echo "⚠️ New artifacts found, release needs update." | tee -a $GITHUB_STEP_SUMMARY
+        fi
 
-  # Handle the release process if assets need updating
-  release_process:
-    runs-on: ubuntu-latest
-    needs: release_logic
-    if: ${{ needs.release_logic.outputs.identical == 'false' }}
-    steps:
-      - uses: actions/checkout@v4
+    - name: Generate release notes
+      run: |
+        python3 scripts/generate_release_notes.py > RELEASE.md
 
-      - name: Generate release notes
-        run: |
-          python3 scripts/generate_release_notes.py > RELEASE.md
+    - name: Append to SHIPPED.log.md
+      run: |
+        datetime=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+        echo "- shipped: $datetime - $release_tag"  >> SHIPPED.log.md
 
-      - name: Append to SHIPPED.log.md
-        run: |
-          datetime=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          echo "- shipped: $datetime - $release_tag"  >> SHIPPED.log.md
+        git config user.name "alt-icons-actions"
+        git config user.email "alt-icons@into.the.void"
+        git add SHIPPED.log.md
+        git commit -m "Shipped WezTerm Windows $release_tag ${datetime}"
+        git push
 
-          git config user.name "alt-icons-actions"
-          git config user.email "alt-icons@into.the.void"
-          git add SHIPPED.log.md
-          git commit -m "Shipped WezTerm Windows $release_tag ${datetime}"
-          git push
+    - name: Create or move release tag on latest commit
+      run: |
+        git tag --force "$release_tag"
+        git push --tags --force
 
-  # Create or move the release tag on the latest commit
-  create_or_move_tag:
-    runs-on: ubuntu-latest
-    needs:
-      - release_process
-      - release_logic
-    if: ${{ needs.release_logic.outputs.identical == 'false' }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Create or move release tag on latest commit
-        run: |
-          git tag --force "$release_tag"
-          git push --tags --force
-
-  # Job to upload artifacts to the release
-  upload_artifacts:
-    runs-on: ubuntu-latest
-    needs:
-      - create_or_move_tag
-      - release_logic
-    if: ${{ needs.release_logic.outputs.identical == 'false' }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Upload artifacts to release
-        run: |
-          for artifact in artifacts/*.zip; do
-            artifact_name=$(basename "$artifact")
-            exists=$(echo "${{ needs.release_logic.outputs.assets_list }}" | grep -q "^${artifact_name}$"; echo $?)
-            if [ $exists -ne 0 ]; then
-              gh release upload "$release_tag" "$artifact"
-            fi
-          done
+    - name: Upload artifacts to release
+      run: |
+        for artifact in artifacts/*.zip; do
+          artifact_name=$(basename "$artifact")
+          exists=$(echo "${{ needs.release_logic.outputs.assets_list }}" | grep -q "^${artifact_name}$"; echo $?)
+          if [ $exists -ne 0 ]; then
+            gh release upload "$release_tag" "$artifact"
+          fi
+        done
