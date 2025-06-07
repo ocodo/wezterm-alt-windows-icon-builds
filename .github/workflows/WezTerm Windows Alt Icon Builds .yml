@@ -45,7 +45,7 @@ jobs:
         id: get-wezterm-zip
         run: |
           export wezterm_version="${{ steps.get-wezterm-latest.outputs.version }}"
-
+          echo "last_built_version=$(< wezterm_version)" >> $GITHUB_OUTPUT
           if [[ -f wezterm_version && "$werterm_version" != "$(< wezterm_version | tr -d '\n')" ]]; then
             echo "wezterm_version=$wezterm_version" >  wezterm_version
             git add wezterm_version
@@ -60,16 +60,20 @@ jobs:
           export url="https://github.com/wezterm/wezterm/releases/download/${wezterm_version}/${wezterm_folder}.zip"
           echo "url=$url"
 
-          curl -Lso temp.zip "$url"
+          curl -Lso wezterm-windows-temp.zip "$url"
 
-          unzip temp.zip
+          unzip wezterm-windows-temp.zip
+          rm wezterm-windows-temp.zip
           mv $wezterm_folder wezterm
-          rm temp.zip
 
-      - name: Debug version capture step one
+      - name: "Version ${{ steps.get-wezterm-latest.outputs.version }}"
         run: |
-          echo "version: ${{ steps.get-wezterm-latest.outputs.version }}"
-
+          cat <<EOD | tee -a $GITHUB_STEP_SUMMARY
+          # WezTerm Windows Alt-Icons Build
+          - Version: ${{ steps.get-wezterm-latest.outputs.version }}
+          - Last Packaged Version: ${{ steps.get-wezterm-zip.outputs.last_built_version }}
+          - New build required: ${{ steps.get-wezterm-zip.outputs.new_version }}
+          EOD
       - uses: actions/upload-artifact@v4
         with:
           name: wezterm.zip
@@ -77,6 +81,7 @@ jobs:
           retention-days: 2
 
   icon-matrix:
+    if: ${{ github.event_name == 'push' || needs.get-wezterm.outputs.new_version }}
     needs: get-wezterm
     runs-on: ubuntu-latest
     outputs:
@@ -97,7 +102,6 @@ jobs:
           retention-days: 2
 
   patch-wezterm-icon:
-    if: ${{ github.event_name == 'push' || needs.get-wezterm.outputs.new_version }}
     needs:
       - get-wezterm
       - icon-matrix
