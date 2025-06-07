@@ -50,7 +50,7 @@ jobs:
           export wezterm_version="${{ steps.get-wezterm-latest.outputs.version }}"
           export last_built_version=$(< wezterm_version | tr -d '\n')
           echo "last_built_version=$last_built_version" >> $GITHUB_OUTPUT
-          if [[ "$werterm_version" != "$last_built_version" ]]; then
+          if [[ "$wezterm_version" != "$last_built_version" ]]; then
             echo "new_build_required=true" >> $GITHUB_OUTPUT
           else
             echo "new_build_required=false" >> $GITHUB_OUTPUT
