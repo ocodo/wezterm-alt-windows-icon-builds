@@ -84,7 +84,7 @@ jobs:
 
   icon-matrix:
     needs: get-wezterm
-    if: ${{ github.event_name == 'push' || needs.get-wezterm.outputs.new_build_required == 'true' }}
+    if: ${{ needs.get-wezterm.outputs.new_build_required == 'true' || github.event_name == 'push' }}
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
