@@ -114,8 +114,13 @@ jobs:
       matrix:
         icon: ${{ fromJson(needs.icon-matrix.outputs.matrix) }}
     runs-on: ubuntu-latest
+
     steps:
-      - run: sudo apt update && sudo apt install wine64 imagemagick
+      - uses: tecolicom/actions-use-apt-tools@v1
+        with:
+          tools: wine64 imagemagick
+          method: timestamp
+          cache: yes
 
       - uses: actions/download-artifact@v4
         with:
