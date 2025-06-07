@@ -83,6 +83,15 @@ jobs:
           path: wezterm
           retention-days: 2
 
+  debug_new_build_required:
+    needs: get-wezterm
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          cat <<EOD | tee -a $GITHUB_STEP_SUMMARY
+          # DEBUGGING needs.get-wezterm.outputs.new_build_required: ${{ needs.get-wezterm.outputs.new_build_required }}
+          EOD
+
   icon-matrix:
     needs: get-wezterm
     if: ${{ needs.get-wezterm.outputs.new_build_required == 'true' }}
