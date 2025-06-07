@@ -11,15 +11,15 @@ on:
         required: true
 
 env:
-  GH_TOKEN: ${{ inputs.token }}
+  GH_TOKEN: ${{ github.event.inputs.token }}
 
 jobs:
   release_logic:
     runs-on: ubuntu-latest
     env:
-      release_tag: ${{ inputs.wezterm_version }}-alt-icons
+      release_tag: ${{ github.event.inputs.wezterm_version }}-alt-icons
     outputs:
-      release_tag: ${{ inputs.wezterm_version }}-alt-icons
+      release_tag: ${{ github.event.inputs.wezterm_version }}-alt-icons
       identical: ${{ steps.compare_assets.outputs.identical }}
       assets_list: ${{ steps.compare_assets.outputs.assets_list }}
     steps:
