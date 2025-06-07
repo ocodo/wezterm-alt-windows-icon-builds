@@ -51,9 +51,9 @@ jobs:
           export last_built_version=$(< wezterm_version | tr -d '\n')
           echo "last_built_version=$last_built_version" >> $GITHUB_OUTPUT
           if [[ "$wezterm_version" != "$last_built_version" ]]; then
-            echo "new_build_required=true" >> $GITHUB_OUTPUT
+            echo "new_build_required='true'" >> $GITHUB_OUTPUT
           else
-            echo "new_build_required=false" >> $GITHUB_OUTPUT
+            echo "new_build_required='false'" >> $GITHUB_OUTPUT
           fi
 
           export wezterm_folder="WezTerm-windows-${wezterm_version}"
