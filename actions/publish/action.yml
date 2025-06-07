@@ -4,9 +4,11 @@ author: jasonm23
 
 inputs:
   wezterm_version:
+    description: "Current version of wezterm being repackaged"
     type: string
     required: true
   token:
+    description: "GITHUB_TOKEN"
     type: string
     required: true
 
@@ -20,6 +22,7 @@ runs:
     - uses: actions/checkout@v4
 
     - name: Display Release Tag
+      shell: bash
       run: |
         cat <<EOD | tee -a $GITHUB_STEP_SUMMARY
         # Release $release_tag
@@ -27,6 +30,7 @@ runs:
         EOD
 
     - name: Check if release tag exists
+      shell: bash
       id: check_tag
       run: |
         echo "Checking for tag '${release_tag}' via GitHub API..." | tee -a $GITHUB_STEP_SUMMARY
@@ -41,6 +45,7 @@ runs:
         fi
 
     - name: Check Existing Release Assets
+      shell: bash
       if: ${{ steps.check_tag.outputs.exists == 'true' }}
       id: compare_assets
       run: |
@@ -72,10 +77,12 @@ runs:
         fi
 
     - name: Generate release notes
+      shell: bash
       run: |
         python3 scripts/generate_release_notes.py > RELEASE.md
 
     - name: Append to SHIPPED.log.md
+      shell: bash
       run: |
         datetime=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
         echo "- shipped: $datetime - $release_tag"  >> SHIPPED.log.md
@@ -87,11 +94,13 @@ runs:
         git push
 
     - name: Create or move release tag on latest commit
+      shell: bash
       run: |
         git tag --force "$release_tag"
         git push --tags --force
 
     - name: Upload artifacts to release
+      shell: bash
       run: |
         for artifact in artifacts/*.zip; do
           artifact_name=$(basename "$artifact")
