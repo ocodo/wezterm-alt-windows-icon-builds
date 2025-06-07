@@ -204,6 +204,7 @@ jobs:
       - patch-wezterm-icon
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: ./.github/workflows/Create Release From Windows Artifacts
         with:
           wezterm_version: ${{ needs.get-wezterm.outputs.version }}
