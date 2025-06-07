@@ -90,6 +90,12 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
+      - uses: tecolicom/actions-use-apt-tools@v1
+        with:
+          tools: wine64 imagemagick
+          method: timestamp
+          cache: yes
+
       - name: "Checkout Local Repo"
         uses: actions/checkout@v4
 
