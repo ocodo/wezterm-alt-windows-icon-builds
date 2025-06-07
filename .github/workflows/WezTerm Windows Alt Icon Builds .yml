@@ -51,9 +51,9 @@ jobs:
           export last_built_version=$(< wezterm_version | tr -d '\n')
           echo "last_built_version=$last_built_version" >> $GITHUB_OUTPUT
           if [[ "$wezterm_version" != "$last_built_version" ]]; then
-            echo "new_build_required='true'" >> $GITHUB_OUTPUT
+            echo "new_build_required=true" >> $GITHUB_OUTPUT
           else
-            echo "new_build_required='false'" >> $GITHUB_OUTPUT
+            echo "new_build_required=false" >> $GITHUB_OUTPUT
           fi
 
           export wezterm_folder="WezTerm-windows-${wezterm_version}"
@@ -83,18 +83,9 @@ jobs:
           path: wezterm
           retention-days: 2
 
-  debug_new_build_required:
-    needs: get_wezterm
-    runs-on: ubuntu-latest
-    steps:
-      - run: |
-          cat <<EOD | tee -a $GITHUB_STEP_SUMMARY
-          # DEBUGGING needs.get_wezterm.outputs.new_build_required: ${{ needs.get_wezterm.outputs.new_build_required }}
-          EOD
-
   icon-matrix:
     needs: get_wezterm
-    if: ${{ needs.get_wezterm.outputs.new_build_required == 'true' }}
+    if: ${{ needs.get_wezterm.outputs.new_build_required == 'true' || github.event_name == 'push' }}
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
