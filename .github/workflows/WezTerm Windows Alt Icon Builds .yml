@@ -97,6 +97,7 @@ jobs:
           retention-days: 2
 
   patch-wezterm-icon:
+    if: ${{ github.event_name == 'push' || needs.get-wezterm.outputs.new_version }}
     needs:
       - get-wezterm
       - icon-matrix
@@ -186,6 +187,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: ./.github/workflows/Create Release From Windows Artifacts.yml
-        if: ${{ github.event_name == 'push' || needs.get-wezterm.outputs.new_version }}
         with:
           wezterm_version: ${{ needs.get-wezterm.outputs.version }}
