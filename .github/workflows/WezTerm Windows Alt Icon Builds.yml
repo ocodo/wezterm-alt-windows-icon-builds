@@ -29,55 +29,59 @@ jobs:
         id: get-latest-wezterm
         run: |
           version=$(
-            curl -s "https://api.github.com/repos/wezterm/wezterm/releases/latest" \
-              | jq -r '.tag_name'
+            git -c 'versionsort.suffix=-' ls-remote --tags --sort='v:refname' \
+              https://github.com/wezterm/wezterm '20*-*-*' \
+              | tail -1 \
+              | cut -f2 \
+              | cut -d'/' -f3
           )
 
-          # Output the tag name using the new syntax
           echo "version=$version" >> $GITHUB_OUTPUT
 
-      - name: Get Last Built Version
-        run: wget https://raw.githubusercontent.com/ocodo/wezterm-alt-windows-icon-builds/refs/heads/main/wezterm_version
-
-      - name: Set release tag variable
-        id: vars
+      - name: Get Our Latest Release Version Tag
+        id: get-our-latest
         run: |
-          echo "release_tag=${{ steps.get-latest-wezterm.outputs.version }}-alt-icons" >> $GITHUB_OUTPUT
+          version=$(
+            git -c 'versionsort.suffix=-' ls-remote --tags --sort='v:refname' \
+              https://github.com/ocodo/wezterm-alt-windows-icon-builds '20*-*-*-alt-icons' \
+              | tail -1 \
+              | cut -f2 \
+              | cut -d'/' -f3
+          )
+
+          echo "version=$version" >> $GITHUB_OUTPUT
 
       - name: Get WezTerm Windows Zip
         id: get-zip-wezterm
         run: |
-          export wezterm_version="${{ steps.get-latest-wezterm.outputs.version }}"
-          export last_built_version=$(< wezterm_version | tr -d '\n')
-          echo "last_built_version=$last_built_version" >> $GITHUB_OUTPUT
-          if [[ "$wezterm_version" != "$last_built_version" ]]; then
-            echo "new_build_required=true" >> $GITHUB_OUTPUT
-          else
+          export wezterm_version=${{ steps.get-latest-wezterm.outputs.version }}
+          export our_latest_version=${{ steps.get-our-latest.outputs.version }}
+
+          echo "our_latest_version=$our_latest_version" >> $GITHUB_OUTPUT
+          if [[ "${wezterm_version}-alt-icons" == "$our_latest_version" ]]; then
             echo "new_build_required=false" >> $GITHUB_OUTPUT
+          else
+            echo "new_build_required=true" >> $GITHUB_OUTPUT
+            export wezterm_folder="WezTerm-windows-${wezterm_version}"
+            curl -Lso wezterm-windows-temp.zip "https://github.com/wezterm/wezterm/releases/download/latest/${wezterm_folder}.zip"
+            unzip wezterm-windows-temp.zip
+            rm wezterm-windows-temp.zip
+            mv $wezterm_folder wezterm
           fi
-
-          export wezterm_folder="WezTerm-windows-${wezterm_version}"
-          echo "wezterm_folder=$wezterm_folder"
-
-          export url="https://github.com/wezterm/wezterm/releases/download/${wezterm_version}/${wezterm_folder}.zip"
-          echo "url=$url"
-
-          curl -Lso wezterm-windows-temp.zip "$url"
-
-          unzip wezterm-windows-temp.zip
-          rm wezterm-windows-temp.zip
-          mv $wezterm_folder wezterm
 
       - name: "Version ${{ steps.get-latest-wezterm.outputs.version }}"
         run: |
           cat <<EOD | tee -a $GITHUB_STEP_SUMMARY
           # WezTerm Windows Alt-Icons Build
+
           - Version: ${{ steps.get-latest-wezterm.outputs.version }}
-          - Last Packaged Version: ${{ steps.get-zip-wezterm.outputs.last_built_version }}
+          - Our Last Version: ${{ steps.get-zip-wezterm.outputs.our_latest_version }}
           - New build required: ${{ steps.get-zip-wezterm.outputs.new_build_required }}
           - github.event_name: ${{ github.event_name }}
           EOD
+
       - uses: actions/upload-artifact@v4
+        if: ${{ steps.get-zip-wezterm.outputs.new_build_required == 'true' }}
         with:
           name: wezterm.zip
           path: wezterm
@@ -211,18 +215,3 @@ jobs:
           wezterm_version: ${{ needs.get-wezterm.outputs.version }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
-  complete:
-    needs:
-      - publish
-      - get-wezterm
-    runs-on: ubuntu-latest
-    if: ${{ needs.get-wezterm.outputs.new_build_required == 'true' }}
-    steps:
-      - uses: actions/checkout@v4
-      - name: Update last built
-        run: |
-          echo "${{ needs.get-wezterm.outputs.version }}" > wezterm_version
-          git add wezterm_version
-          git commit "Built ${{ needs.get-wezterm.outputs.version }}"
-          git push origin main
-          echo "### Built ${{ needs.get-wezterm.outputs.version }}" >> $GITHUB_STEP_SUMMARY
