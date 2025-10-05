@@ -63,10 +63,7 @@ scoop install wezterm-alt-icon/wezterm-grapao-original-style
 
 ### Available Variants
 
-The build names follow the pattern: `wezterm-{artist}-{icon-name}`
-
-- **Artist** matches the icon creator (e.g., mikker, gf3, grapao)
-- **Icon name** matches the build name from the releases table (converted to lowercase with hyphens)
+The build names follow the pattern with lowercase: `wezterm-{artist}-{icon-name}`
 
 Examples:
 
