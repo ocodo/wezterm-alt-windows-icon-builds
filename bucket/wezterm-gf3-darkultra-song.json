@@ -26,12 +26,12 @@
     ],
     "checkver": {
         "github": "https://github.com/ocodo/wezterm-alt-windows-icon-builds",
-        "regex": "wezterm-Gf3-Darkultra-song-([\\w-]+)"
+        "regex": "tag/(([\\w-]+)-alt-icons)"
     },
     "autoupdate": {
         "architecture": {
             "64bit": {
-                "url": "https://github.com/ocodo/wezterm-alt-windows-icon-builds/releases/download/$version/WezTerm-windows-Gf3-Darkultra-song-$version.zip"
+                "url": "https://github.com/ocodo/wezterm-alt-windows-icon-builds/releases/download/$version/WezTerm-windows-Gf3-Darkultra-song-$match1.zip"
             }
         },
         "hash": {
