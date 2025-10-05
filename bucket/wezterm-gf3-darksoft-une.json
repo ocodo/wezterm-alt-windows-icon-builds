@@ -26,12 +26,12 @@
     ],
     "checkver": {
         "github": "https://github.com/ocodo/wezterm-alt-windows-icon-builds",
-        "regex": "wezterm-Gf3-Darksoft-une-([\\w-]+)"
+        "regex": "tag/(([\\w-]+)-alt-icons)"
     },
     "autoupdate": {
         "architecture": {
             "64bit": {
-                "url": "https://github.com/ocodo/wezterm-alt-windows-icon-builds/releases/download/$version/WezTerm-windows-Gf3-Darksoft-une-$version.zip"
+                "url": "https://github.com/ocodo/wezterm-alt-windows-icon-builds/releases/download/$version/WezTerm-windows-Gf3-Darksoft-une-$match1.zip"
             }
         },
         "hash": {
