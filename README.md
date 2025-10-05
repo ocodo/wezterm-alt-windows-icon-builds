@@ -46,25 +46,30 @@ All manifests install the same WezTerm application with different icons. Choose 
 ### GF3 Icon Collection
 
 **Dark Brite Series** - Vibrant dark themes
+
 - `wezterm-gf3-darkbrite-une` - Dark brite variant 1
 - `wezterm-gf3-darkbrite-deux` - Dark brite variant 2
 
 **Dark Soft Series** - Muted dark themes
+
 - `wezterm-gf3-darksoft-une` - Dark soft variant 1
 - `wezterm-gf3-darksoft-deux` - Dark soft variant 2
 
 **Dark Ultra Series** - Ultra dark themes
+
 - `wezterm-gf3-darkultra-nueng` - Dark ultra variant 1 (Thai: หนึ่ง)
 - `wezterm-gf3-darkultra-song` - Dark ultra variant 2 (Thai: สอง)
 - `wezterm-gf3-darkultra-sam` - Dark ultra variant 3 (Thai: สาม)
 
 **Bright Series** - Light and vibrant themes
+
 - `wezterm-gf3-shine` - Shiny variant
 - `wezterm-gf3-ultrabrite` - Ultra bright variant
 
 ### Grapao Icon Collection
 
 **Grapao Series** - Nature-inspired themes
+
 - `wezterm-grapao-base` - Base grapao design
 - `wezterm-grapao-forest` - Forest green variant
 - `wezterm-grapao-green` - Green variant
@@ -74,6 +79,7 @@ All manifests install the same WezTerm application with different icons. Choose 
 ### Mikker Icon Collection
 
 **Mikker Series** - Minimalist design
+
 - `wezterm-mikker-black` - Black minimalist icon
 - `wezterm` - Default (same as mikker-black)
 
