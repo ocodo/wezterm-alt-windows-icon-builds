@@ -26,12 +26,12 @@
     ],
     "checkver": {
         "github": "https://github.com/ocodo/wezterm-alt-windows-icon-builds",
-        "regex": "wezterm-Grapao-Pastel-([\\w-]+)"
+        "regex": "tag/(([\\w-]+)-alt-icons)"
     },
     "autoupdate": {
         "architecture": {
             "64bit": {
-                "url": "https://github.com/ocodo/wezterm-alt-windows-icon-builds/releases/download/$version/WezTerm-windows-Grapao-Pastel-$version.zip"
+                "url": "https://github.com/ocodo/wezterm-alt-windows-icon-builds/releases/download/$version/WezTerm-windows-Grapao-Pastel-$match1.zip"
             }
         },
         "hash": {
