@@ -1,11 +1,14 @@
-name: Tests
+name: Tests for scoop bucket
 
 on:
   push:
     branches:
-      - 'main'
-      - 'master'
+      - "main"
+    paths:
+      - "bucket/*.json"
   pull_request:
+    paths:
+      - "bucket/*.json"
   workflow_dispatch:
 
 jobs:
