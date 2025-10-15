@@ -50,7 +50,7 @@ See original discussion: [wezterm/wezterm#2396](https://github.com/wezterm/wezte
 First installation:
 
 ```sh
-scoop bucket add wezterm-alt-icon https://github.com/noidilin/wezterm-alt-icon.git
+scoop bucket add wezterm-alt-icon https://github.com/ocodo/wezterm-alt-windows-icon-builds.git
 scoop install wezterm-alt-icon/wezterm-mikker-black
 ```
 
