@@ -1,2 +1,7 @@
 __pycache__
 RELEASE.md
+*.sublime-workspace
+*~
+._*
+page.html
+checkver-*.html
