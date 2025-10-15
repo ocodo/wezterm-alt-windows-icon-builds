@@ -1,9 +1,11 @@
+name: Excavator for scoop bucket
+
 on:
   workflow_dispatch:
   schedule:
     # run every 4 hours
-    - cron: '20 */4 * * *'
-name: Excavator
+    - cron: "20 */4 * * *"
+
 jobs:
   excavate:
     name: Excavate
