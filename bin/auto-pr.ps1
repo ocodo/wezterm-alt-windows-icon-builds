@@ -1,8 +1,8 @@
-# this tells the auto-pr script which upstream repository to create pull requests against when automated updates are found by checkver.ps1.
+# local wrapper for manual testing, and it delegates to Scoop's binary after resolving path
 
 param(
     # overwrite upstream param
-    [String]$upstream = "noidilin/wezterm-alt-icon:master"
+    [String]$upstream = "ocodo/wezterm-alt-windows-icon-builds:main"
 )
 
 if (!$env:SCOOP_HOME) { $env:SCOOP_HOME = Convert-Path (scoop prefix scoop) }
