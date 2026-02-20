@@ -1,4 +1,25 @@
+<img src="alt-icons/wezterm-icon-Mikker-Black.png" width="64" alt="Black Icon"> <img src="alt-icons/wezterm-icon-Grapao-Original-Style.png" width="64" alt="Original-Style Icon"> <img src="alt-icons/wezterm-icon-Gf3-Shine.png" width="64" alt="Shine Icon">  <img src="alt-icons/wezterm-icon-Gf3-Ultrabrite.png" width="64" alt="Ultrabrite Icon"> <img src="alt-icons/wezterm-icon-Gf3-Darkbrite-deux.png" width="64" alt="Darkbrite-Deux Icon">  
+
 # WezTerm - Windows Builds with Alternative Icons
+
+### Quick Windows install via Scoop bucket
+
+add the new custom scoop bucket
+
+```
+scoop bucket add wezterm-alt-icon https://github.com/ocodo/wezterm-alt-windows-icon-builds.git
+scoop search wezterm # list all the icons
+```
+Then install a build of wezterm latest with icon 
+
+```
+# e.g. install mikker-black icon
+scoop install wezterm-alt-icon/wezterm-mikker-black
+```
+
+Carry on reading for full info or go [check out the wezterm docs](https://wezterm.org)
+
+# Full info:
 
 This repository automatically syncs with [wezterm/wezterm](https://github.com/wezterm/wezterm) to fetch the latest Windows zip distribution and creates custom builds with alternative icons.
 
