@@ -29,16 +29,9 @@ For each custom icon listed below, we:
 
 ## Want to contribute an icon?
 
-- Open a Pull Request with your PNG icon
-- Icon requirements checklist:
-  - Size between 400x400 and 1024x1024 pixels
-  - PNG format
-  - Transparent background
-  - No unnecessary padding (this is automated for you)
+If you'd like to add an icon, open a [new icon issue](https://github.com/ocodo/wezterm-alt-windows-icon-builds/issues/new?labels=new+icon) and assuming it passes quality controls/community interest (votes, socials, or I personally flip at how gorgeous it it!), it'll be integrated & added to the build/distribution process.
 
-- Get support 👍 for your submission
-  - Add previews to the PR discussion
-  - Get commuinity feedback
+Make it a banger :+1:
 
 ## About These Icons
 
@@ -94,8 +87,3 @@ Examples:
 
 Refer to the table above to find your preferred icon, then install using the corresponding build name.
 
-# Contributors
-
-If you'd like to add an icon, open a [new icon issue](https://github.com/ocodo/wezterm-alt-windows-icon-builds/issues/new?labels=new+icon) and assuming it passes quality controls/community interest (votes, socials, or I personally flip at how gorgeous it it!), it'll be integrated & added to the build/distribution process.
-
-Not every idea is a banger, but don't quit, practice makes...  ...a bit better each time.
